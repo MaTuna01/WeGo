@@ -1,0 +1,25 @@
+# Xcode 개인 설정·빌드 산출물
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+.DS_Store
+
+# 비밀 값 — 커밋하지 말고 *.example 파일만 올린다
+Secrets.xcconfig
+*.secret.xcconfig
+GoogleService-Info.plist
+
+# 서명·인증 파일
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
+*.p8
+
+# fastlane 사용 시
+fastlane/report.xml
+fastlane/README.md
+fastlane/test_output/
+fastlane/.env*
