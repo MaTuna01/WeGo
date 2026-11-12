@@ -15,7 +15,8 @@ final class RideSession {
     private(set) var distanceMeters: CLLocationDistance = 0
     private(set) var track: [CLLocationCoordinate2D] = []
 
-    @ObservationIgnored private var pausedAt: Date?
+    /// 일시정지 중이면 멈춘 시각
+    @ObservationIgnored private(set) var pausedAt: Date?
     @ObservationIgnored private var pausedTotal: TimeInterval = 0
     @ObservationIgnored private var lastLocation: CLLocation?
 
@@ -23,6 +24,16 @@ final class RideSession {
         self.startStation = startStation
         self.pass = pass
         self.startedAt = startedAt
+    }
+
+    /// 시간권이 끝나는 시각
+    var passEndsAt: Date {
+        startedAt.addingTimeInterval(pass.duration)
+    }
+
+    /// 주행 시간 타이머의 기준 시각. 이 시각부터 흐른 시간(일시정지 중이면 pausedAt까지)이 주행 시간이다.
+    var ridingClockStart: Date {
+        startedAt.addingTimeInterval(pausedTotal)
     }
 
     func rentalElapsed(at date: Date) -> TimeInterval {

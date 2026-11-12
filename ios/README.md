@@ -23,7 +23,9 @@ WeGo/
   DesignSystem/   색상·폰트 토큰, 공통 컴포넌트(탭바, 칩, 바텀시트, 캔버스)
   Features/       Splash · Login · Main · Home(지도/정류장) · Riding · Profile
   Resources/      Assets.xcassets(Figma 폴더는 스크립트가 생성), Fonts
-Config/Info.plist 배열형 키(UIAppFonts)만. 나머지는 빌드 설정 INFOPLIST_KEY_*
+RideWidget/       위젯 확장 타깃 — 라이딩 Live Activity(잠금화면·다이나믹 아일랜드)
+Shared/           앱·위젯 두 타깃이 함께 컴파일하는 코드(RideActivityAttributes)
+Config/           Info.plist는 배열·사전형 키만(UIAppFonts, UIBackgroundModes, 위젯 NSExtension). 나머지는 빌드 설정 INFOPLIST_KEY_*
 ```
 
 ## Figma ↔ 화면

@@ -6,8 +6,37 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA00000000000000000000CC /* RideWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000C1 /* RideWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA00000000000000000000CE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA00000000000000000000A9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA00000000000000000000C4;
+			remoteInfo = RideWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA00000000000000000000CB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA00000000000000000000CC /* RideWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		AA00000000000000000000A1 /* WeGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WeGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA00000000000000000000C1 /* RideWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RideWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +45,27 @@
 			path = WeGo;
 			sourceTree = "<group>";
 		};
+		AA00000000000000000000C2 /* RideWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RideWidget;
+			sourceTree = "<group>";
+		};
+		AA00000000000000000000C3 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		AA00000000000000000000A3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00000000000000000000C6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +79,8 @@
 			isa = PBXGroup;
 			children = (
 				AA00000000000000000000A2 /* WeGo */,
+				AA00000000000000000000C2 /* RideWidget */,
+				AA00000000000000000000C3 /* Shared */,
 				AA00000000000000000000A5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				AA00000000000000000000A1 /* WeGo.app */,
+				AA00000000000000000000C1 /* RideWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,13 +104,16 @@
 				AA00000000000000000000A7 /* Sources */,
 				AA00000000000000000000A3 /* Frameworks */,
 				AA00000000000000000000A8 /* Resources */,
+				AA00000000000000000000CB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA00000000000000000000CD /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				AA00000000000000000000A2 /* WeGo */,
+				AA00000000000000000000C3 /* Shared */,
 			);
 			name = WeGo;
 			packageProductDependencies = (
@@ -69,6 +121,29 @@
 			productName = WeGo;
 			productReference = AA00000000000000000000A1 /* WeGo.app */;
 			productType = "com.apple.product-type.application";
+		};
+		AA00000000000000000000C4 /* RideWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00000000000000000000C8 /* Build configuration list for PBXNativeTarget "RideWidget" */;
+			buildPhases = (
+				AA00000000000000000000C5 /* Sources */,
+				AA00000000000000000000C6 /* Frameworks */,
+				AA00000000000000000000C7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA00000000000000000000C2 /* RideWidget */,
+				AA00000000000000000000C3 /* Shared */,
+			);
+			name = RideWidget;
+			packageProductDependencies = (
+			);
+			productName = RideWidget;
+			productReference = AA00000000000000000000C1 /* RideWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +156,9 @@
 				LastUpgradeCheck = 2720;
 				TargetAttributes = {
 					AA00000000000000000000A6 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					AA00000000000000000000C4 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -101,12 +179,20 @@
 			projectRoot = "";
 			targets = (
 				AA00000000000000000000A6 /* WeGo */,
+				AA00000000000000000000C4 /* RideWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		AA00000000000000000000A8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00000000000000000000C7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -123,7 +209,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00000000000000000000C5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA00000000000000000000CD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA00000000000000000000C4 /* RideWidget */;
+			targetProxy = AA00000000000000000000CE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AA00000000000000000000B3 /* Debug */ = {
@@ -246,6 +347,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "위고";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "가까운 정류장을 찾고 라이딩 경로와 거리를 기록하기 위해 위치 정보가 필요해요.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -277,6 +379,7 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "위고";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "가까운 정류장을 찾고 라이딩 경로와 거리를 기록하기 위해 위치 정보가 필요해요.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -289,6 +392,56 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.matuna01.wego;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		AA00000000000000000000C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DVVXKVB7G4;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/RideWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "위고";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.matuna01.wego.RideWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AA00000000000000000000CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DVVXKVB7G4;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/RideWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "위고";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.matuna01.wego.RideWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -312,6 +465,15 @@
 			buildConfigurations = (
 				AA00000000000000000000B5 /* Debug */,
 				AA00000000000000000000B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA00000000000000000000C8 /* Build configuration list for PBXNativeTarget "RideWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000000C9 /* Debug */,
+				AA00000000000000000000CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

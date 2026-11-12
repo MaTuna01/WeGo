@@ -10,5 +10,10 @@
 		<string>Pretendard-SemiBold.otf</string>
 		<string>Pretendard-Bold.otf</string>
 	</array>
+	<!-- 라이딩 중 화면을 꺼도 GPS 기록을 이어간다 (LocationService.activeRide) -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>
