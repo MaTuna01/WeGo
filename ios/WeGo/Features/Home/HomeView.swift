@@ -77,7 +77,7 @@ struct HomeView: View {
             StationSheet(
                 station: station,
                 filter: $courseFilter,
-                courses: MockData.courses(for: courseFilter),
+                courses: MockData.courses(from: station, filter: courseFilter),
                 onRent: { rent(at: station) }
             )
             .frame(height: 361)
