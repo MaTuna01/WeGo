@@ -19,12 +19,18 @@ final class AppState {
     private(set) var ride: RideSession?
 
     @ObservationIgnored let location = LocationService()
+    @ObservationIgnored private let rideActivity = RideActivityController()
     private static let loginKey = "wego.isLoggedIn"
 
     private(set) var isLoggedIn: Bool
 
     init() {
         isLoggedIn = UserDefaults.standard.bool(forKey: Self.loginKey)
+        RideActivityController.endAll()
+        location.onRideUpdated = { [weak self] in
+            guard let self, let ride = self.ride else { return }
+            self.rideActivity.distanceDidChange(for: ride)
+        }
     }
 
     func finishSplash() {
@@ -50,11 +56,19 @@ final class AppState {
         ride = session
         location.activeRide = session
         location.requestPermission()
+        rideActivity.start(for: session)
         selectedTab = .ride
+    }
+
+    func togglePauseRide() {
+        guard let ride else { return }
+        ride.togglePause()
+        rideActivity.refresh(for: ride)
     }
 
     /// TODO: 라이딩 요약 화면(디자인 대기) → 서버에 기록 저장
     func endRide() {
+        rideActivity.end()
         ride = nil
         location.activeRide = nil
         selectedTab = .home

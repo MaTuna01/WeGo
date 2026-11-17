@@ -2,13 +2,21 @@ import CoreLocation
 import Observation
 
 /// 위치 권한과 GPS 업데이트. 라이딩 중이면 세션에 위치를 기록한다.
-/// TODO: 화면을 꺼도 기록하려면 Background Modes(Location updates) + Live Activity 작업이 필요하다.
+/// 라이딩 중에는 화면을 꺼도 기록을 이어간다(Background Modes: location, 상단에 위치 사용 표시가 뜬다).
 @Observable
 final class LocationService: NSObject, CLLocationManagerDelegate {
     private(set) var authorization: CLAuthorizationStatus
     private(set) var lastLocation: CLLocation?
 
-    @ObservationIgnored var activeRide: RideSession?
+    @ObservationIgnored var activeRide: RideSession? {
+        didSet {
+            let riding = activeRide != nil
+            manager.allowsBackgroundLocationUpdates = riding
+            manager.showsBackgroundLocationIndicator = riding
+        }
+    }
+    /// 라이딩 중 위치를 기록한 뒤 호출된다(Live Activity 거리 갱신용).
+    @ObservationIgnored var onRideUpdated: (() -> Void)?
     @ObservationIgnored private let manager: CLLocationManager
 
     override init() {
@@ -53,6 +61,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
             activeRide?.record(location)
         }
         lastLocation = locations.last
+        if activeRide != nil { onRideUpdated?() }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

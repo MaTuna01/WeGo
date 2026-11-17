@@ -38,7 +38,7 @@ struct RidingView: View {
                     distanceMeters: session.distanceMeters,
                     isPaused: session.isPaused,
                     onStop: { confirmStop = true },
-                    onTogglePause: { session.togglePause() }
+                    onTogglePause: { appState.togglePauseRide() }
                 )
             }
             .frame(height: 262)
