@@ -30,7 +30,7 @@ struct MainView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             WeGoTabBar(selection: $appState.selectedTab)
-                .padding(.bottom, 29)
+                .padding(.bottom, 23)
         }
         .ignoresSafeArea(edges: .bottom)
     }
