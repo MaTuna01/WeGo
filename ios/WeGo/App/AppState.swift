@@ -17,6 +17,8 @@ final class AppState {
     var phase: AppPhase = .splash
     var selectedTab: MainTab = .home
     private(set) var ride: RideSession?
+    /// 정류장 시트에서 "코스 선택하기"로 지정한 코스. 대여 후 출발하면 이 코스로 안내한다.
+    var plannedCourse: Course?
 
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
@@ -51,8 +53,11 @@ final class AppState {
         phase = .login
     }
 
-    func startRide(from station: Station, pass: TimePass) {
-        let session = RideSession(startStation: station, pass: pass)
+    /// - course: 지정한 코스. 출발 정류장이 다르면 무시하고 자유 주행으로 시작한다.
+    func startRide(from station: Station, pass: TimePass, course: Course? = nil) {
+        let course = course.flatMap { $0.startStationID == station.id ? $0 : nil }
+        let session = RideSession(startStation: station, pass: pass, course: course)
+        plannedCourse = nil
         ride = session
         location.activeRide = session
         location.requestPermission()

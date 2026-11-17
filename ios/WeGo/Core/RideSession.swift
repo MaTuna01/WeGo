@@ -5,12 +5,14 @@ import Observation
 /// 진행 중인 라이딩 1건.
 /// - 대여 시간(rentalElapsed): 일시정지와 무관하게 흐른다. 시간권 남은 시간·초과요금 계산에 쓴다.
 /// - 주행 시간(ridingElapsed): 일시정지 구간을 뺀 시간. 큰 타이머에 보여준다.
+/// - 코스(course): 코스 안내 주행이면 있고, 자유 주행이거나 중간에 취소하면 nil. 기록은 어느 쪽이든 똑같이 남는다.
 @Observable
 final class RideSession {
     let startStation: Station
     let pass: TimePass
     let startedAt: Date
 
+    private(set) var course: Course?
     private(set) var isPaused = false
     private(set) var distanceMeters: CLLocationDistance = 0
     private(set) var track: [CLLocationCoordinate2D] = []
@@ -20,10 +22,20 @@ final class RideSession {
     @ObservationIgnored private var pausedTotal: TimeInterval = 0
     @ObservationIgnored private var lastLocation: CLLocation?
 
-    init(startStation: Station, pass: TimePass, startedAt: Date = .now) {
+    init(startStation: Station, pass: TimePass, course: Course? = nil, startedAt: Date = .now) {
         self.startStation = startStation
         self.pass = pass
+        self.course = course
         self.startedAt = startedAt
+    }
+
+    var isFollowingCourse: Bool {
+        course != nil
+    }
+
+    /// 코스 안내를 그만두고 자유 주행으로 바꾼다. 지금까지의 기록(거리·경로·시간)은 그대로 이어진다.
+    func cancelCourse() {
+        course = nil
     }
 
     /// 시간권이 끝나는 시각
