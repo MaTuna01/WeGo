@@ -23,3 +23,6 @@ fastlane/report.xml
 fastlane/README.md
 fastlane/test_output/
 fastlane/.env*
+
+# Figma에서 내보낸 원본(Assets.xcassets/Design으로 변환해 등록)
+design-exports/
