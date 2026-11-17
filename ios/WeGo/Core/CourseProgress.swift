@@ -12,8 +12,6 @@ struct CourseProgress {
         let remainingMeters: Double
         /// 남은 예상 시간. 코스 예상 시간의 평균 속도로 환산한다(화면에는 "약 N분").
         let remainingSeconds: Double
-        /// 현재 위치가 코스 선에서 떨어진 거리(경로 이탈 판단용)
-        let offRouteMeters: Double
         /// 0...1
         let fraction: Double
     }
@@ -42,7 +40,8 @@ struct CourseProgress {
 
         let origin = location
         let here = PlanePoint.zero
-        var best: (traveled: Double, offRoute: Double)?
+        // 현재 위치에서 가장 가까운 코스 위 지점을 찾는다.
+        var best: (traveled: Double, gap: Double)?
 
         for index in 0..<(path.count - 1) {
             let a = PlanePoint(path[index].coordinate, origin: origin)
@@ -50,11 +49,10 @@ struct CourseProgress {
             let segment = b - a
             let lengthSquared = segment.dot(segment)
             let t = lengthSquared > 0 ? min(max((here - a).dot(segment) / lengthSquared, 0), 1) : 0
-            let projected = a + segment * t
-            let offRoute = (here - projected).length
-            if best == nil || offRoute < best!.offRoute {
+            let gap = (here - (a + segment * t)).length
+            if best == nil || gap < best!.gap {
                 let segmentMeters = cumulativeMeters[index + 1] - cumulativeMeters[index]
-                best = (cumulativeMeters[index] + segmentMeters * t, offRoute)
+                best = (cumulativeMeters[index] + segmentMeters * t, gap)
             }
         }
 
@@ -65,7 +63,6 @@ struct CourseProgress {
             traveledMeters: best.traveled,
             remainingMeters: remaining,
             remainingSeconds: metersPerSecond > 0 ? remaining / metersPerSecond : 0,
-            offRouteMeters: best.offRoute,
             fraction: best.traveled / totalMeters
         )
     }
