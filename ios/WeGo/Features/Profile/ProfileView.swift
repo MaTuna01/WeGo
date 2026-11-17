@@ -13,11 +13,11 @@ struct ProfileView: View {
                 .wegoFont(.regular, 14)
                 .foregroundStyle(WeGoColor.gray500)
                 .multilineTextAlignment(.center)
-            Button("로그아웃") {
+            Button(appState.isGuest ? "로그인하기" : "로그아웃") {
                 appState.signOut()
             }
             .font(WeGoFont.pretendard(.medium, 15))
-            .foregroundStyle(WeGoColor.red)
+            .foregroundStyle(appState.isGuest ? WeGoColor.primary : WeGoColor.red)
             .padding(.top, 8)
             Spacer()
             Spacer()

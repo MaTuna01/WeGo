@@ -27,6 +27,9 @@ struct LoginView: View {
                 SocialLoginButton(icon: "iconApple", title: "Apple로 시작하기", style: .dark) {
                     appState.signIn(with: .apple)
                 }
+                SocialLoginButton(icon: nil, title: "비로그인으로 시작하기", style: .light) {
+                    appState.continueAsGuest()
+                }
             }
             .padding(.horizontal, 14)
 
@@ -61,7 +64,8 @@ struct SocialLoginButton: View {
         case dark
     }
 
-    let icon: String
+    /// 없으면 글자만
+    let icon: String?
     let title: String
     let style: Style
     let action: () -> Void
@@ -69,7 +73,9 @@ struct SocialLoginButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Image(icon)
+                if let icon {
+                    Image(icon)
+                }
                 Text(title)
                     .wegoFont(.medium, 20, tracking: -0.6)
             }
