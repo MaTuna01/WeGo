@@ -30,11 +30,73 @@ struct Station: Identifiable, Hashable {
     }
 }
 
+/// 정류장에서 정류장까지의 코스. 사용자가 공유한 주행 기록이나 팀이 등록한 큐레이션 경로에서 만들어진다.
+/// 경로·고도·후기 같은 상세 정보는 기본값이 있어서, 목록용으로 제목·거리·시간만 넣어 만들 수도 있다.
 struct Course: Identifiable, Hashable {
     let id: String
+    /// 카드에 보이는 이름. 보통 도착지 이름(예: "서울한강공원")
     let title: String
     let distanceMeters: Int
+    /// 예상 소요 시간. ±20% 오차가 있으니 화면에는 "약 N분"으로만 보여준다.
     let durationSeconds: Int
+
+    var startStationID: Station.ID?
+    var endStationID: Station.ID?
+    /// 경로 점들(출발 → 도착 순서). 고도가 있으면 경사도 그래프에 쓴다.
+    var path: [CoursePoint] = []
+    /// 경로 중간의 들를 만한 곳(지도·경사도 그래프의 작은 점)
+    var waypoints: [CourseWaypoint] = []
+    /// 자전거 전용도로 구간. `path`의 점 인덱스 범위
+    var bikeLaneSegments: [ClosedRange<Int>] = []
+    var reviews: [CourseReview] = []
+    var likeCount = 0
+    /// 이 코스로 탄 횟수("탔어요")
+    var rideCount = 0
+    /// 내가 북마크한 코스인지(저장 코스 탭)
+    var isSaved = false
+    var createdAt: Date?
+
+    var coordinates: [CLLocationCoordinate2D] {
+        path.map(\.coordinate)
+    }
+
+    /// 고도 정보가 없으면 nil
+    var maxElevationMeters: Double? {
+        path.compactMap(\.elevationMeters).max()
+    }
+
+    /// 후기가 없으면 nil
+    var averageRating: Double? {
+        guard !reviews.isEmpty else { return nil }
+        return Double(reviews.map(\.rating).reduce(0, +)) / Double(reviews.count)
+    }
+}
+
+struct CoursePoint: Hashable {
+    let latitude: Double
+    let longitude: Double
+    /// 해발 고도(m). 데이터가 없으면 nil
+    var elevationMeters: Double?
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+struct CourseWaypoint: Hashable {
+    let name: String
+    /// `Course.path`에서의 위치
+    let pathIndex: Int
+}
+
+struct CourseReview: Identifiable, Hashable {
+    let id: String
+    /// 1~5
+    let rating: Int
+    let text: String
+    /// 후기 사진(에셋 이름). 없으면 nil
+    var photoName: String?
+    let createdAt: Date
 }
 
 /// 정류장 시트의 코스 탭 (Figma 143:458: 인기 코스 / 최신 코스 / 저장 코스)
