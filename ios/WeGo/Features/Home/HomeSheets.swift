@@ -67,7 +67,15 @@ struct StationSheet: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
                     ForEach(CourseFilter.allCases, id: \.self) { item in
-                        PillChip(title: item.title, isSelected: filter == item, width: 76, height: 26, background: WeGoColor.chip) {
+                        PillChip(
+                            title: item.title,
+                            isSelected: filter == item,
+                            width: 76,
+                            height: 26,
+                            background: WeGoColor.chip,
+                            selectedBackground: WeGoColor.primaryLight,
+                            selectedForeground: .black
+                        ) {
                             filter = item
                         }
                     }
@@ -83,11 +91,14 @@ struct StationSheet: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 103)
                     } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 12) {
                                 ForEach(courses) { course in
-                                    CourseCard(course: course, showsMenu: true)
-                                        .frame(width: 159, height: 103)
+                                    CourseRow(
+                                        course: course,
+                                        startName: MockData.station(id: course.startStationID)?.name ?? station.name,
+                                        endName: MockData.station(id: course.endStationID)?.name ?? "도착 정류장"
+                                    )
                                 }
                             }
                             .padding(.horizontal, 20)
