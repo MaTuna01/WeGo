@@ -24,6 +24,8 @@ final class RideRecord {
     var pointCount: Int
     /// 경로 점(`TrackPoint`) 목록을 압축한 것. 1초 간격이라 1시간이면 3,600점이 넘어 한 덩어리로 둔다.
     @Attribute(.externalStorage) var trackData: Data
+    /// 경로가 끊긴 곳(앱이 꺼져 있던 구간)의 시작 인덱스
+    var segmentStarts: [Int] = []
 
     init(
         id: UUID = UUID(),
@@ -37,7 +39,8 @@ final class RideRecord {
         distanceMeters: Double,
         ridingSeconds: Double,
         rentalSeconds: Double,
-        trackPoints: [TrackPoint]
+        trackPoints: [TrackPoint],
+        segmentStarts: [Int] = []
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -52,6 +55,7 @@ final class RideRecord {
         self.rentalSeconds = rentalSeconds
         self.pointCount = trackPoints.count
         self.trackData = TrackCodec.encode(trackPoints)
+        self.segmentStarts = segmentStarts
     }
 
     /// 저장된 경로 점. 압축을 풀어야 해서 목록 화면처럼 자주 그리는 곳에서는 부르지 않는다.
@@ -74,7 +78,8 @@ extension RideRecord {
             distanceMeters: session.distanceMeters,
             ridingSeconds: session.ridingElapsed(at: endedAt),
             rentalSeconds: session.rentalElapsed(at: endedAt),
-            trackPoints: session.trackPoints
+            trackPoints: session.trackPoints,
+            segmentStarts: session.segmentStarts
         )
     }
 }

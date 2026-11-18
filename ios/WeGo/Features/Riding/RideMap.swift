@@ -17,9 +17,12 @@ struct RideMapView: View {
                 MapPolyline(coordinates: course.coordinates)
                     .stroke(WeGoColor.primaryLight.opacity(0.75), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
             }
-            if session.track.count > 1 {
-                MapPolyline(coordinates: session.track)
-                    .stroke(WeGoColor.primary, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+            // 앱이 꺼져 있던 구간은 잇지 않고 구간마다 따로 그린다.
+            ForEach(Array(session.trackSegments.enumerated()), id: \.offset) { _, segment in
+                if segment.count > 1 {
+                    MapPolyline(coordinates: segment)
+                        .stroke(WeGoColor.primary, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+                }
             }
 
             Annotation(session.startStation.name, coordinate: session.startStation.coordinate, anchor: StationPin.anchor(isSelected: false)) {
