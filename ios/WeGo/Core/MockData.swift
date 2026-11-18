@@ -1,6 +1,7 @@
 import MapKit
 
-/// 서버 API가 붙기 전까지 쓰는 목업 데이터. 좌표·잔여 대수·고도·후기는 실제 값이 아니다.
+/// 서버 API가 붙기 전까지 쓰는 목업 데이터. 잔여 대수·고도·후기는 실제 값이 아니다.
+/// 좌표는 실제 정류장 위치가 아니지만, 지도에서 강 위에 찍히지 않도록 육지(공원·도로) 위로 맞춰 두었다.
 enum MockData {
     static let defaultRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.5270, longitude: 126.9300),
@@ -12,7 +13,7 @@ enum MockData {
                 latitude: 37.52710, longitude: 126.93290, dockCount: 15,
                 availableBikes: 3, updatedAt: Date().addingTimeInterval(-120)),
         Station(id: "ST-YD-HG", name: "여의도 한강공원 원효대교 남단", bikeOperator: .ttareungyi,
-                latitude: 37.53070, longitude: 126.94370, dockCount: 20,
+                latitude: 37.52320, longitude: 126.93920, dockCount: 20,
                 availableBikes: 7, updatedAt: Date().addingTimeInterval(-60)),
         Station(id: "ST-GH-01", name: "국회의사당역 1번출구", bikeOperator: .ttareungyi,
                 latitude: 37.52840, longitude: 126.91760, dockCount: 12,
@@ -32,9 +33,9 @@ enum MockData {
     static let courses: [Course] = [
         makeCourse(
             id: "C-YN-HG", title: "원효대교 남단 강변길", from: "ST-YN-01", to: "ST-YD-HG",
-            path: [(37.52710, 126.93290, 13), (37.52830, 126.93520, 12), (37.52930, 126.93780, 12),
-                   (37.53010, 126.94050, 14), (37.53060, 126.94250, 13), (37.53070, 126.94370, 15)],
-            waypoints: [CourseWaypoint(name: "물빛광장", pathIndex: 2)],
+            path: [(37.52710, 126.93290, 13), (37.52620, 126.93400, 12), (37.52540, 126.93520, 12),
+                   (37.52460, 126.93660, 14), (37.52390, 126.93790, 13), (37.52320, 126.93920, 15)],
+            waypoints: [CourseWaypoint(name: "한강공원 산책로", pathIndex: 2)],
             bikeLanes: [0...5], likes: 42, rides: 128, saved: true, daysAgo: 20,
             reviews: [
                 review("R-1", 5, "경치가 예뻐서 자전거 탈 맛 납니다", daysAgo: 2),
@@ -70,9 +71,9 @@ enum MockData {
         ),
         makeCourse(
             id: "C-HG-YN", title: "여의나루역 강변길", from: "ST-YD-HG", to: "ST-YN-01",
-            path: [(37.53070, 126.94370, 15), (37.53060, 126.94250, 13), (37.53010, 126.94050, 14),
-                   (37.52930, 126.93780, 12), (37.52830, 126.93520, 12), (37.52710, 126.93290, 13)],
-            waypoints: [CourseWaypoint(name: "물빛광장", pathIndex: 3)],
+            path: [(37.52320, 126.93920, 15), (37.52390, 126.93790, 13), (37.52460, 126.93660, 14),
+                   (37.52540, 126.93520, 12), (37.52620, 126.93400, 12), (37.52710, 126.93290, 13)],
+            waypoints: [CourseWaypoint(name: "한강공원 산책로", pathIndex: 3)],
             bikeLanes: [0...5], likes: 12, rides: 33, daysAgo: 5
         ),
         makeCourse(
