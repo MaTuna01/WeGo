@@ -8,9 +8,15 @@ struct StationMapView: View {
     let stations: [Station]
     @Binding var selectedID: Station.ID?
     @Binding var position: MapCameraPosition
+    /// 정류장 시트에서 고른 코스. 있으면 경로 선을 그린다(Figma 299:121).
+    var course: Course?
 
     var body: some View {
         Map(position: $position, selection: $selectedID) {
+            if let course, course.path.count > 1 {
+                MapPolyline(coordinates: course.coordinates)
+                    .stroke(WeGoColor.primaryLight, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+            }
             UserAnnotation {
                 CurrentLocationMarker()
             }
@@ -24,6 +30,36 @@ struct StationMapView: View {
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+    }
+
+    /// 코스 전체가 시트 위 지도 영역(상단 칩 아래 ~ 시트 위)에 들어오도록 하는 카메라 영역.
+    /// 874pt 화면 기준 보이는 지도 영역은 y 130~365인데, 선택된 정류장 핀이 좌표 위로 약 75pt 솟아 있어서
+    /// 위쪽은 그만큼 더 비운 y 205~365 안에 좌표가 들어오게 한다. 그 비율만큼 영역을 넓히고 중심을 남쪽으로 내린다.
+    static func region(fitting course: Course) -> MKCoordinateRegion? {
+        let coordinates = course.coordinates
+        guard let first = coordinates.first else { return nil }
+        var minLat = first.latitude, maxLat = first.latitude
+        var minLon = first.longitude, maxLon = first.longitude
+        for coordinate in coordinates {
+            minLat = min(minLat, coordinate.latitude)
+            maxLat = max(maxLat, coordinate.latitude)
+            minLon = min(minLon, coordinate.longitude)
+            maxLon = max(maxLon, coordinate.longitude)
+        }
+
+        let visibleTop = 205.0 / 874, visibleBottom = 355.0 / 874
+        let visibleFraction = visibleBottom - visibleTop
+        let visibleCenter = (visibleTop + visibleBottom) / 2
+        let padding = 1.4
+
+        let latitudeSpan = max(maxLat - minLat, 0.002) * padding / visibleFraction
+        let longitudeSpan = max(maxLon - minLon, 0.002) * padding
+        // 화면 위쪽(visibleCenter)에 코스 중심이 오도록 지도 중심을 남쪽으로 옮긴다.
+        let centerLatitude = (minLat + maxLat) / 2 - (0.5 - visibleCenter) * latitudeSpan
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: centerLatitude, longitude: (minLon + maxLon) / 2),
+            span: MKCoordinateSpan(latitudeDelta: latitudeSpan, longitudeDelta: longitudeSpan)
+        )
     }
 }
 
