@@ -11,12 +11,14 @@ Copyright © 2026 WeGo 팀. All rights reserved.
 
 ## 대상 파일
 
-`WeGo/Resources/Assets.xcassets/Figma/` 아래 다음 이미지 세트와,
-같은 디자인을 담은 Figma 원본·내보낸 파일 전부.
+`WeGo/Resources/Assets.xcassets/`의 `Figma/`·`Design/` 폴더 아래 다음 이미지 세트와,
+같은 디자인을 담은 Figma 원본·내보낸 파일(`design-exports/`, gitignore로 저장소에는 올리지 않음) 전부.
 
 | 에셋 | 내용 |
 |---|---|
-| `duckRider` | 주황 헬멧 오리 자전거 일러스트 |
+| `duckRider` | 주황 헬멧 오리 자전거 일러스트(스플래시, 코스 취소 모달, 라이딩 대기 화면) |
+| `duckLoginHero` | 로그인 화면 대형 오리 일러스트 |
+| `duckSkyHat` | 하늘색 모자 오리(주행 응원 배너, 지도 위 내 위치) |
 | `splashPhoto` | 스플래시 사진 |
 | `splashLogoKo`, `splashLogoWego` | 위고 손글씨 로고, WEGO 로고 |
 | `splashLine1`~`splashLine4`, `splashAccent1`~`splashAccent3` | 스플래시 장식 선 |
@@ -26,4 +28,4 @@ Copyright © 2026 WeGo 팀. All rights reserved.
 - **소스 코드**: 이 고지의 대상이 아닙니다. 코드 라이선스는 저장소 루트 README를 따릅니다.
 - **Pretendard 폰트** (`WeGo/Resources/Fonts/`): 길형진 님의 SIL Open Font License 1.1 저작물입니다. 같은 폴더의 `OFL.txt`를 따릅니다.
 - **Google·Apple 로고** (`iconGoogle`, `iconApple`): 각 회사의 상표입니다. 각 회사의 브랜드 가이드라인을 따릅니다.
-- 위 표에 없는 나머지 에셋(탭·지도 아이콘 등): 출처를 확인한 뒤 이 문서에 분류합니다.
+- 위 표에 없는 나머지 에셋(탭 아이콘 `tabHome`·`tabCourse`·`tabRide`·`tabProfile`, 진행 방향 화살표 `headingArrow`, 일시정지 아이콘 `rideSideButtonIcon`, 지도·핀 아이콘 등): 출처를 확인한 뒤 이 문서에 분류합니다.
