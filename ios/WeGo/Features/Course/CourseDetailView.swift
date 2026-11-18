@@ -10,7 +10,8 @@ struct CourseDetailView: View {
     let onBack: () -> Void
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
+        // 시트를 펼쳤을 때만 스크롤된다(DraggableBottomSheet).
+        SheetScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 details
                     .padding(.horizontal, 20)

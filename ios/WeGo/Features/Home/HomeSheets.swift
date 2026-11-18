@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// 정류장 선택 전 홈 시트 (Figma 143:528): 많이 찾는 코스 / 나의 이용 기록
+/// 정류장 선택 전 홈 시트 (Figma 299:58): 많이 찾는 코스 / 나의 이용 기록. 끌어서 높이를 바꾼다.
 struct HomeSheet: View {
     let popularCourses: [Course]
     let myRides: [Course]
+    @Binding var detent: SheetDetent
+    let heights: (CGFloat) -> SheetHeights
 
     var body: some View {
-        BottomSheetContainer {
-            ScrollView(showsIndicators: false) {
+        DraggableBottomSheet(detent: $detent, heights: heights) {
+            SheetScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     sectionTitle("많이 찾는 코스")
                         .padding(.top, 15)
@@ -68,24 +70,33 @@ struct StationSheet: View {
     let chosenCourseID: Course.ID?
     let onChooseCourse: () -> Void
     let onRent: () -> Void
+    @Binding var detent: SheetDetent
+    let heights: (CGFloat) -> SheetHeights
 
     /// 하단 버튼 아래로 플로팅 탭바(58)와 여백(위 24, 아래 23)이 들어갈 자리
     private let tabBarReserve: CGFloat = 24 + 58 + 23
 
     var body: some View {
-        BottomSheetContainer(handleTopPadding: 13) {
+        // 하단 버튼은 어느 높이에서든 보여야 해서, 접힐 때는 위쪽 목록·상세만 흐리게 하고 줄여서 가린다.
+        DraggableBottomSheet(detent: $detent, handleTopPadding: 13, fadesContentWhenCollapsed: false, heights: heights) {
             VStack(alignment: .leading, spacing: 0) {
-                if let detailCourse = courses.first(where: { $0.id == detailCourseID }) {
-                    CourseDetailView(
-                        course: detailCourse,
-                        startName: startName(of: detailCourse),
-                        endName: endName(of: detailCourse),
-                        onBack: { detailCourseID = nil }
-                    )
-                    .padding(.top, 14)
-                } else {
-                    listContent
+                Group {
+                    if let detailCourse = courses.first(where: { $0.id == detailCourseID }) {
+                        CourseDetailView(
+                            course: detailCourse,
+                            startName: startName(of: detailCourse),
+                            endName: endName(of: detailCourse),
+                            onBack: { detailCourseID = nil }
+                        )
+                        .padding(.top, 14)
+                    } else {
+                        listContent
+                    }
                 }
+                // 접힘에서는 0까지 줄어들어 버튼을 밀어내지 않게 한다.
+                .frame(minHeight: 0, maxHeight: .infinity, alignment: .top)
+                .clipped()
+                .fadesWhenSheetCollapses()
 
                 buttons
                     .padding(.horizontal, 20)
@@ -136,7 +147,7 @@ struct StationSheet: View {
                 .foregroundStyle(WeGoColor.gray500)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView(showsIndicators: false) {
+            SheetScrollView {
                 VStack(spacing: 12) {
                     ForEach(courses) { course in
                         CourseRow(
