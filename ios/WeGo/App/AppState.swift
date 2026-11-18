@@ -23,6 +23,8 @@ final class AppState {
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
     @ObservationIgnored private let rideReminder = RideReminder()
+    /// 끝난 주행 기록(기기 저장)
+    @ObservationIgnored let rideRecords = RideRecordStore()
     private static let loginKey = "wego.isLoggedIn"
     private static let guestKey = "wego.isGuest"
     private static let reminderKey = "wego.rideReminderEnabled"
@@ -109,8 +111,12 @@ final class AppState {
         ride?.cancelCourse()
     }
 
-    /// TODO: 라이딩 요약 화면(디자인 대기) → 서버에 기록 저장
+    /// 반납 완료: 주행 기록을 기기에 저장하고 주행을 끝낸다.
+    /// TODO: 라이딩 요약 화면(디자인 대기), 서버에 기록 업로드
     func endRide() {
+        if let ride {
+            rideRecords.save(ride)
+        }
         rideActivity.end()
         rideReminder.cancel()
         ride = nil

@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 @main
@@ -9,6 +10,7 @@ struct WeGoApp: App {
             RootView()
                 .environment(appState)
                 .environment(appState.location)
+                .modelContainer(appState.rideRecords.container)
         }
     }
 }

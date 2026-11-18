@@ -15,6 +15,8 @@ final class RideSession {
     let startedAt: Date
 
     private(set) var course: Course?
+    /// 출발할 때 안내받기로 한 코스. 중간에 코스를 취소해도 남는다(기록용).
+    let initialCourse: Course?
     private(set) var isPaused = false
     private(set) var distanceMeters: CLLocationDistance = 0
     private(set) var trackPoints: [TrackPoint] = []
@@ -29,6 +31,7 @@ final class RideSession {
         self.startStation = startStation
         self.pass = pass
         self.course = course
+        self.initialCourse = course
         self.startedAt = startedAt
     }
 
@@ -114,7 +117,7 @@ final class RideSession {
 }
 
 /// 주행 경로의 점 하나. 서버에 올릴 때는 시각을 M 값으로 담는다(LINESTRING M, 노션 5-2).
-struct TrackPoint: Hashable {
+struct TrackPoint: Hashable, Codable {
     let latitude: Double
     let longitude: Double
     let timestamp: Date
