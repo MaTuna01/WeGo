@@ -62,6 +62,8 @@ struct StationSheet: View {
     let courses: [Course]
     /// 카드를 눌러 고른 코스(주황 테두리, 지도에 경로 표시)
     @Binding var selectedCourseID: Course.ID?
+    /// "코스 선택하기"로 이번 주행 코스로 지정한 코스
+    let chosenCourseID: Course.ID?
     let onChooseCourse: () -> Void
     let onRent: () -> Void
 
@@ -133,8 +135,15 @@ struct StationSheet: View {
     /// 173×52 버튼 두 개, 간격 16
     private var buttons: some View {
         HStack(spacing: 16) {
-            sheetButton("코스 선택하기", background: WeGoColor.gray500, action: onChooseCourse)
-                .disabled(selectedCourseID == nil)
+            // 지정 상태 디자인이 아직 없어 "선택됨" + 주황 배경으로 임시 구분한다.
+            let isChosen = selectedCourseID != nil && selectedCourseID == chosenCourseID
+            sheetButton(
+                isChosen ? "선택됨" : "코스 선택하기",
+                background: isChosen ? WeGoColor.primaryLight : WeGoColor.gray500,
+                action: onChooseCourse
+            )
+            .disabled(selectedCourseID == nil)
+            .accessibilityHint(isChosen ? "다시 누르면 코스 지정을 해제해요" : "대여 후 이 코스로 안내해요")
             sheetButton("대여하러 가기", background: WeGoColor.buttonDark, action: onRent)
                 .accessibilityHint("\(station.bikeOperator.displayName) 앱으로 이동해 대여해요")
         }

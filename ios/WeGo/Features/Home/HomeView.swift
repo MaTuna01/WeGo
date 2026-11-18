@@ -62,8 +62,12 @@ struct HomeView: View {
         .onAppear {
             appState.location.requestPermission()
         }
-        .onChange(of: selectedStationID) { _, _ in
+        .onChange(of: selectedStationID) { _, newID in
             selectFirstCourse()
+            // 다른 정류장으로 바꾸면 그 정류장에서 출발하지 않는 지정 코스는 풀어 준다.
+            if appState.plannedCourse?.startStationID != newID {
+                appState.plannedCourse = nil
+            }
         }
         .onChange(of: courseFilter) { _, _ in
             selectFirstCourse()
@@ -86,13 +90,13 @@ struct HomeView: View {
             Button("출발하기") {
                 awaitingReturnFrom = nil
                 selectedStationID = nil
-                appState.startRide(from: station, pass: .oneHour)
+                appState.startRide(from: station, pass: .oneHour, course: appState.plannedCourse)
             }
             Button("아직이에요", role: .cancel) {
                 awaitingReturnFrom = nil
             }
         } message: { station in
-            Text("\(station.bikeOperator.displayName) 앱에서 대여했다면 출발을 눌러 주세요. 1시간권 기준으로 타이머가 시작돼요.")
+            Text(departMessage(for: station))
         }
     }
 
@@ -104,7 +108,8 @@ struct HomeView: View {
                 filter: $courseFilter,
                 courses: stationCourses,
                 selectedCourseID: $selectedCourseID,
-                onChooseCourse: {},
+                chosenCourseID: appState.plannedCourse?.id,
+                onChooseCourse: toggleChosenCourse,
                 onRent: { rent(at: station) }
             )
             // Figma 299:121: 시트가 화면 위에서 365pt(874pt 기준)부터 시작
@@ -120,6 +125,18 @@ struct HomeView: View {
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
     private func selectFirstCourse() {
         selectedCourseID = stationCourses.first?.id
+    }
+
+    /// 고른 카드를 이번 주행 코스로 지정하거나, 이미 지정돼 있으면 해제한다.
+    private func toggleChosenCourse() {
+        guard let selectedCourse else { return }
+        appState.plannedCourse = appState.plannedCourse?.id == selectedCourse.id ? nil : selectedCourse
+    }
+
+    private func departMessage(for station: Station) -> String {
+        let base = "\(station.bikeOperator.displayName) 앱에서 대여했다면 출발을 눌러 주세요. 1시간권 기준으로 타이머가 시작돼요."
+        guard let course = appState.plannedCourse, course.startStationID == station.id else { return base }
+        return base + "\n'\(course.title)' 코스로 안내해요."
     }
 
     private func rent(at station: Station) {
