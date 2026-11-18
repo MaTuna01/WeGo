@@ -103,6 +103,12 @@ final class AppState {
         rideActivity.refresh(for: ride)
     }
 
+    /// 코스 안내를 그만두고 자유 주행으로 바꾼다. 대여 시간·주행 기록·10분 전 알림·Live Activity는 그대로 이어진다
+    /// (Live Activity에는 코스 정보가 없어 다시 보낼 것이 없다).
+    func cancelCourse() {
+        ride?.cancelCourse()
+    }
+
     /// TODO: 라이딩 요약 화면(디자인 대기) → 서버에 기록 저장
     func endRide() {
         rideActivity.end()

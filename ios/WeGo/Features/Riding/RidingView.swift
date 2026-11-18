@@ -2,7 +2,8 @@ import MapKit
 import SwiftUI
 
 /// 코스 안내 주행 (Figma 299:343): 지도(코스·지나온 경로, 오리 위치 표시) + 응원 배너 + 지도 버튼 + 일시정지 + 하단 패널.
-/// 주행 중에는 하단 탭바를 숨긴다(MainView). 코스 없이 출발한 자유 주행도 같은 화면을 쓰고, 패널 내용만 다르다.
+/// 주행 중에는 하단 탭바를 숨긴다(MainView). 코스를 취소했거나 코스 없이 출발한 자유 주행(Figma 299:401)도 같은 화면을 쓰고,
+/// 코스 경로·도착 핀이 없고 패널 내용과 버튼(반납하러가기 하나)만 다르다.
 struct RidingView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocationService.self) private var location
@@ -71,8 +72,11 @@ struct RidingView: View {
             .overlay {
                 if showCancelCourse {
                     RideCancelCourseModal(
-                        // TODO: 자유 주행 전환(다음 커밋)
-                        onConfirm: { showCancelCourse = false },
+                        onConfirm: {
+                            showCancelCourse = false
+                            // 코스 경로·도착 핀이 사라지고, 패널이 달린 거리 / 주행 시간 / 1시간까지 + 반납하러가기 하나로 바뀐다.
+                            withAnimation { appState.cancelCourse() }
+                        },
                         onDismiss: { showCancelCourse = false }
                     )
                     .transition(.opacity)
