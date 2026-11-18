@@ -2,7 +2,8 @@ import MapKit
 import SwiftUI
 
 /// 코스 안내 주행 (Figma 299:343): 지도(코스·지나온 경로, 오리 위치 표시) + 응원 배너 + 지도 버튼 + 일시정지 + 하단 패널.
-/// 주행 중에는 하단 탭바를 숨긴다(MainView). 코스 없이 출발한 자유 주행도 같은 화면을 쓰고, 패널 내용만 다르다.
+/// 주행 중에는 하단 탭바를 숨긴다(MainView). 코스를 취소했거나 코스 없이 출발한 자유 주행(Figma 299:401)도 같은 화면을 쓰고,
+/// 코스 경로·도착 핀이 없고 패널 내용과 버튼(반납하러가기 하나)만 다르다.
 struct RidingView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocationService.self) private var location
@@ -14,6 +15,7 @@ struct RidingView: View {
     /// 반납하러 운영사 앱에 가 있는 동안 true. 돌아오면 반납 확인을 띄운다.
     @State private var awaitingReturn = false
     @State private var showReturnPrompt = false
+    @State private var showCancelCourse = false
 
     /// 하단 패널 높이(Figma 299:343). 지도 버튼은 패널 위로 띄운다.
     private let panelHeight: CGFloat = 202
@@ -61,13 +63,26 @@ struct RidingView: View {
                     RideStatsPanel(
                         stats: stats(at: context.date),
                         isPaused: session.isPaused,
-                        // TODO: 코스 취소 확인 모달 → 자유 주행 전환(다음 이슈)
-                        onCancelCourse: session.isFollowingCourse ? {} : nil,
+                        onCancelCourse: session.isFollowingCourse ? { showCancelCourse = true } : nil,
                         onReturn: goReturn
                     )
                 }
                 .frame(height: panelHeight)
             }
+            .overlay {
+                if showCancelCourse {
+                    RideCancelCourseModal(
+                        onConfirm: {
+                            showCancelCourse = false
+                            // 코스 경로·도착 핀이 사라지고, 패널이 달린 거리 / 주행 시간 / 1시간까지 + 반납하러가기 하나로 바뀐다.
+                            withAnimation { appState.cancelCourse() }
+                        },
+                        onDismiss: { showCancelCourse = false }
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeOut(duration: 0.2), value: showCancelCourse)
             .onReturnFromOperatorApp(isAwaiting: awaitingReturn) {
                 showReturnPrompt = true
             }
