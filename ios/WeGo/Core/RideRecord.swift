@@ -9,6 +9,7 @@ final class RideRecord {
     @Attribute(.unique) var id: UUID
     var startedAt: Date
     var endedAt: Date
+    /// 대여하러 간 정류장("출발하기"를 누른 정류장). 실제로 경로가 시작된 정류장은 `matchedStartStationID`
     var startStationID: String
     var startStationName: String
     /// 안내받은 코스. 자유 주행으로 출발했으면 nil
@@ -26,6 +27,20 @@ final class RideRecord {
     @Attribute(.externalStorage) var trackData: Data
     /// 경로가 끊긴 곳(앱이 꺼져 있던 구간)의 시작 인덱스
     var segmentStarts: [Int] = []
+
+    // MARK: 정류장 매칭 결과(StationMatcher, 노션 10-3). 서버 연동 후에는 서버가 다시 판정한다.
+    /// 경로 앞쪽에서 처음 매칭된 정류장
+    var matchedStartStationID: String?
+    var matchedStartStationName: String?
+    /// 경로 뒤쪽에서 마지막으로 매칭된 정류장. 공유 구간이 짧으면(정류장 밖에서 끝남 등) 비어 있다.
+    var endStationID: String?
+    var endStationName: String?
+    /// 공유 구간(정류장 → 정류장)의 첫 점·마지막 점 인덱스. 그 앞뒤는 공유하지 않는다.
+    var sharedStartIndex: Int?
+    var sharedEndIndex: Int?
+    var sharedLengthMeters: Double = 0
+    /// 정류장별로 공유할 수 있는 기록인지. 실제 공유는 주행 요약 화면에서 사용자가 고른다(기본 비공개).
+    var isShareable: Bool = false
 
     init(
         id: UUID = UUID(),
@@ -65,23 +80,29 @@ final class RideRecord {
 }
 
 extension RideRecord {
-    /// 홈 "나의 이용 기록" 카드 이름: "11/18 원효대교 남단 강변길"(코스를 끝까지 안내받음) / "11/18 여의나루역 1번출구 앞 출발"
+    /// 홈 "나의 이용 기록" 카드 이름. 줄바꿈(\n)마다 한 줄씩, 줄마다 따로 줄인다(정류장 이름이 길어 카드 폭을 넘기 때문).
+    /// - 출발·도착 정류장이 매칭됨: "여의나루역 1번출구 앞\n→ 여의도 한강공원 원효대교 남단"
+    /// - 코스를 끝까지 안내받음: "원효대교 남단 강변길"
+    /// - 그 외: "여의나루역 1번출구 앞 출발"
     var cardTitle: String {
+        if let endStationName {
+            return "\(matchedStartStationName ?? startStationName)\n→ \(endStationName)"
+        }
+        if let courseTitle, !courseCanceled {
+            return courseTitle
+        }
+        return "\(matchedStartStationName ?? startStationName) 출발"
+    }
+
+    /// 카드 아래 줄: 날짜 · 달린 거리 · 주행 시간(실측)
+    var cardSubtitle: String {
         let parts = Calendar.current.dateComponents([.month, .day], from: startedAt)
         let date = String(format: "%02d/%02d", parts.month ?? 0, parts.day ?? 0)
-        if let courseTitle, !courseCanceled {
-            return "\(date) \(courseTitle)"
-        }
-        return "\(date) \(startStationName) 출발"
+        return "\(date) · \(WeGoFormat.distance(Int(distanceMeters.rounded()))) · \(WeGoFormat.minutes(ridingSeconds))"
     }
 
-    /// 카드 아래 줄: 달린 거리 · 주행 시간(실측)
-    var cardSubtitle: String {
-        "\(WeGoFormat.distance(Int(distanceMeters.rounded()))) · \(WeGoFormat.minutes(ridingSeconds))"
-    }
-
-    /// 끝난 주행 세션으로 기록을 만든다.
-    convenience init(session: RideSession, endedAt: Date) {
+    /// 끝난 주행 세션으로 기록을 만들고, 정류장 목록으로 출발·도착 정류장과 공유 구간을 판정해 넣는다.
+    convenience init(session: RideSession, endedAt: Date, stations: [Station]) {
         self.init(
             startedAt: session.startedAt,
             endedAt: endedAt,
@@ -96,6 +117,28 @@ extension RideRecord {
             trackPoints: session.trackPoints,
             segmentStarts: session.segmentStarts
         )
+        applyMatch(
+            StationMatcher.match(
+                points: session.trackPoints.map(\.coordinate),
+                segmentStarts: session.segmentStarts,
+                stations: stations
+            ),
+            stations: stations
+        )
+    }
+}
+
+extension RideRecord {
+    func applyMatch(_ match: StationMatcher.Result, stations: [Station]) {
+        func name(_ id: String?) -> String? { stations.first { $0.id == id }?.name }
+        matchedStartStationID = match.startStationID
+        matchedStartStationName = name(match.startStationID)
+        endStationID = match.endStationID
+        endStationName = name(match.endStationID)
+        sharedStartIndex = match.sharedRange?.lowerBound
+        sharedEndIndex = match.sharedRange?.upperBound
+        sharedLengthMeters = match.sharedLengthMeters
+        isShareable = match.isShareable
     }
 }
 
@@ -151,13 +194,15 @@ final class RideRecordStore {
         context = MainActor.assumeIsolated { container.mainContext }
     }
 
-    /// 반납 완료한 주행을 저장한다.
-    func save(_ session: RideSession, endedAt: Date = .now) {
-        let record = RideRecord(session: session, endedAt: endedAt)
+    /// 반납 완료한 주행을 저장한다. 정류장 목록으로 출발·도착 정류장과 공유 구간을 함께 판정한다.
+    /// TODO: 정류장 목록은 StationRepository(서버 정류장 목록 캐시)가 생기면 그 목록으로 바꾼다.
+    func save(_ session: RideSession, endedAt: Date = .now, stations: [Station] = MockData.stations) {
+        let record = RideRecord(session: session, endedAt: endedAt, stations: stations)
         context.insert(record)
         do {
             try context.save()
             logger.info("주행 기록 저장: \(record.pointCount, privacy: .public)점, \(Int(record.distanceMeters), privacy: .public)m, 압축 \(record.trackData.count, privacy: .public)B, 전체 \(self.count(), privacy: .public)건")
+            logger.info("정류장 매칭: \(record.matchedStartStationName ?? "-", privacy: .public) → \(record.endStationName ?? "-", privacy: .public), 공유 구간 \(record.sharedStartIndex.map(String.init) ?? "-", privacy: .public)~\(record.sharedEndIndex.map(String.init) ?? "-", privacy: .public) \(Int(record.sharedLengthMeters), privacy: .public)m, 공유 가능 \(record.isShareable, privacy: .public)")
         } catch {
             logger.error("주행 기록 저장 실패: \(error.localizedDescription, privacy: .public)")
         }

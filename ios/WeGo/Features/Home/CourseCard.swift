@@ -16,6 +16,7 @@ struct CourseCard: View {
         )
     }
 
+    /// - title: 줄바꿈(\n)으로 나누면 줄마다 한 줄씩 따로 줄여서 보여준다(예: 출발 정류장 / → 도착 정류장).
     init(title: String, subtitle: String, showsMenu: Bool = false) {
         self.title = title
         self.subtitle = subtitle
@@ -27,12 +28,15 @@ struct CourseCard: View {
             .fill(WeGoColor.placeholder)
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .wegoFont(.semibold, 13, tracking: -0.4)
-                        .lineLimit(1)
+                    ForEach(Array(title.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in
+                        Text(line)
+                            .wegoFont(.semibold, 13, tracking: -0.4)
+                            .lineLimit(1)
+                    }
                     Text(subtitle)
                         .wegoFont(.regular, 11, tracking: -0.3)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .foregroundStyle(WeGoColor.gray800)
                 .padding(10)
