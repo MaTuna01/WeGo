@@ -16,6 +16,9 @@ struct HomeView: View {
     @State private var detailCourseID: Course.ID?
     @State private var awaitingReturnFrom: Station?
     @State private var showDepartPrompt = false
+    @State private var sheetDetent: SheetDetent = .standard
+    /// 위 검색바·칩의 아래끝(시트를 펼쳤을 때 여기까지 올라온다)
+    @State private var topBarBottom: CGFloat = 100
 
     private var visibleStations: [Station] {
         MockData.stations.filter { operatorFilter == nil || $0.bikeOperator == operatorFilter }
@@ -54,7 +57,11 @@ struct HomeView: View {
             )
             .padding(.horizontal, 20)
             .padding(.top, 8)
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.frame(in: .named(Self.space)).maxY
+            } action: { topBarBottom = $0 }
         }
+        .coordinateSpace(.named(Self.space))
         .overlay(alignment: .bottom) {
             sheet
         }
@@ -63,6 +70,7 @@ struct HomeView: View {
             appState.location.requestPermission()
         }
         .onChange(of: selectedStationID) { _, newID in
+            sheetDetent = .standard
             selectFirstCourse()
             // 다른 정류장으로 바꾸면 그 정류장에서 출발하지 않는 지정 코스는 풀어 준다.
             if appState.plannedCourse?.startStationID != newID {
@@ -115,10 +123,28 @@ struct HomeView: View {
             .containerRelativeFrame(.vertical) { height, _ in height * (874 - 365) / 874 }
             .transition(.move(edge: .bottom))
         } else {
-            HomeSheet(popularCourses: MockData.popularCourses, myRides: MockData.myRides)
-                .frame(height: 372)
-                .transition(.move(edge: .bottom))
+            HomeSheet(
+                popularCourses: MockData.popularCourses,
+                myRides: MockData.myRides,
+                detent: $sheetDetent,
+                heights: homeSheetHeights
+            )
+            .transition(.move(edge: .bottom))
         }
+    }
+
+    private static let space = "HomeView"
+
+    /// 접힘: 플로팅 탭바(아래 여백 23 + 높이 58) 위로 손잡이만 보이게
+    private static let collapsedSheetHeight: CGFloat = 23 + 58 + 24
+
+    /// 홈 시트: 기본은 Figma 높이 372pt(299:58, 위에서 502pt부터)
+    private func homeSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
+        SheetHeights(
+            collapsed: Self.collapsedSheetHeight,
+            standard: 372,
+            expanded: containerHeight - topBarBottom - 12
+        )
     }
 
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).

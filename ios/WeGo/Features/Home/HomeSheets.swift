@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// 정류장 선택 전 홈 시트 (Figma 143:528): 많이 찾는 코스 / 나의 이용 기록
+/// 정류장 선택 전 홈 시트 (Figma 299:58): 많이 찾는 코스 / 나의 이용 기록. 끌어서 높이를 바꾼다.
 struct HomeSheet: View {
     let popularCourses: [Course]
     let myRides: [Course]
+    @Binding var detent: SheetDetent
+    let heights: (CGFloat) -> SheetHeights
 
     var body: some View {
-        BottomSheetContainer {
-            ScrollView(showsIndicators: false) {
+        DraggableBottomSheet(detent: $detent, heights: heights) {
+            SheetScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     sectionTitle("많이 찾는 코스")
                         .padding(.top, 15)
