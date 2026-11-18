@@ -18,6 +18,13 @@
 			remoteGlobalIDString = AA00000000000000000000C4;
 			remoteInfo = RideWidget;
 		};
+		AA00000000000000000000D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA00000000000000000000A9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA00000000000000000000A6;
+			remoteInfo = WeGo;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +44,7 @@
 /* Begin PBXFileReference section */
 		AA00000000000000000000A1 /* WeGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WeGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000C1 /* RideWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RideWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA00000000000000000000D0 /* WeGoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WeGoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -53,6 +61,11 @@
 		AA00000000000000000000C3 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		AA00000000000000000000D1 /* WeGoTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WeGoTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -72,6 +85,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00000000000000000000D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -81,6 +101,7 @@
 				AA00000000000000000000A2 /* WeGo */,
 				AA00000000000000000000C2 /* RideWidget */,
 				AA00000000000000000000C3 /* Shared */,
+				AA00000000000000000000D1 /* WeGoTests */,
 				AA00000000000000000000A5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +111,7 @@
 			children = (
 				AA00000000000000000000A1 /* WeGo.app */,
 				AA00000000000000000000C1 /* RideWidget.appex */,
+				AA00000000000000000000D0 /* WeGoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -145,6 +167,29 @@
 			productReference = AA00000000000000000000C1 /* RideWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		AA00000000000000000000D2 /* WeGoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00000000000000000000D8 /* Build configuration list for PBXNativeTarget "WeGoTests" */;
+			buildPhases = (
+				AA00000000000000000000D3 /* Sources */,
+				AA00000000000000000000D4 /* Frameworks */,
+				AA00000000000000000000D5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA00000000000000000000D7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA00000000000000000000D1 /* WeGoTests */,
+			);
+			name = WeGoTests;
+			packageProductDependencies = (
+			);
+			productName = WeGoTests;
+			productReference = AA00000000000000000000D0 /* WeGoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -160,6 +205,10 @@
 					};
 					AA00000000000000000000C4 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					AA00000000000000000000D2 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = AA00000000000000000000A6;
 					};
 				};
 			};
@@ -180,6 +229,7 @@
 			targets = (
 				AA00000000000000000000A6 /* WeGo */,
 				AA00000000000000000000C4 /* RideWidget */,
+				AA00000000000000000000D2 /* WeGoTests */,
 			);
 		};
 /* End PBXProject section */
@@ -193,6 +243,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA00000000000000000000C7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00000000000000000000D5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -216,6 +273,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00000000000000000000D3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -223,6 +287,11 @@
 			isa = PBXTargetDependency;
 			target = AA00000000000000000000C4 /* RideWidget */;
 			targetProxy = AA00000000000000000000CE /* PBXContainerItemProxy */;
+		};
+		AA00000000000000000000D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA00000000000000000000A6 /* WeGo */;
+			targetProxy = AA00000000000000000000D6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -448,6 +517,44 @@
 			};
 			name = Release;
 		};
+		AA00000000000000000000D9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DVVXKVB7G4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.matuna01.wego.WeGoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WeGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WeGo";
+			};
+			name = Debug;
+		};
+		AA00000000000000000000DA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DVVXKVB7G4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.matuna01.wego.WeGoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WeGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WeGo";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -474,6 +581,15 @@
 			buildConfigurations = (
 				AA00000000000000000000C9 /* Debug */,
 				AA00000000000000000000CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA00000000000000000000D8 /* Build configuration list for PBXNativeTarget "WeGoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000000000000000000D9 /* Debug */,
+				AA00000000000000000000DA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
