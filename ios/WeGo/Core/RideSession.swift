@@ -6,6 +6,8 @@ import Observation
 /// - 대여 시간(rentalElapsed): 일시정지와 무관하게 흐른다. 시간권 남은 시간·초과요금 계산에 쓴다.
 /// - 주행 시간(ridingElapsed): 일시정지 구간을 뺀 시간. 큰 타이머에 보여준다.
 /// - 코스(course): 코스 안내 주행이면 있고, 자유 주행이거나 중간에 취소하면 nil. 기록은 어느 쪽이든 똑같이 남는다.
+/// - 경로 기록(trackPoints): GPS가 주는 위치(움직이는 동안 약 1초 간격)를 시각과 함께 모두 남긴다.
+///   멈춰 있는 동안의 점도 남겨서 쉰 시간이 보이게 하고, GPS 흔들림은 거리 합산에서만 거른다.
 @Observable
 final class RideSession {
     let startStation: Station
@@ -15,12 +17,13 @@ final class RideSession {
     private(set) var course: Course?
     private(set) var isPaused = false
     private(set) var distanceMeters: CLLocationDistance = 0
-    private(set) var track: [CLLocationCoordinate2D] = []
+    private(set) var trackPoints: [TrackPoint] = []
 
     /// 일시정지 중이면 멈춘 시각
     @ObservationIgnored private(set) var pausedAt: Date?
     @ObservationIgnored private var pausedTotal: TimeInterval = 0
-    @ObservationIgnored private var lastLocation: CLLocation?
+    /// 거리를 마지막으로 더한 위치. 흔들림이 쌓이지 않게, 실제로 움직였다고 볼 때만 옮긴다.
+    @ObservationIgnored private var distanceAnchor: CLLocation?
 
     init(startStation: Station, pass: TimePass, course: Course? = nil, startedAt: Date = .now) {
         self.startStation = startStation
@@ -67,23 +70,68 @@ final class RideSession {
             pausedTotal += Date().timeIntervalSince(pausedAt)
             self.pausedAt = nil
             isPaused = false
-            lastLocation = nil // 재개 시 정지 중 이동분이 거리에 섞이지 않게
+            distanceAnchor = nil // 재개 시 정지 중 이동분이 거리에 섞이지 않게
         } else {
             pausedAt = .now
             isPaused = true
         }
     }
 
+    /// 지도에 그릴 지나온 경로
+    var track: [CLLocationCoordinate2D] {
+        trackPoints.map(\.coordinate)
+    }
+
     func record(_ location: CLLocation) {
         guard !isPaused,
               location.horizontalAccuracy >= 0,
-              location.horizontalAccuracy <= 50 else { return }
-        if let lastLocation {
-            let delta = location.distance(from: lastLocation)
-            guard delta >= 3 else { return } // GPS 떨림 무시
-            distanceMeters += delta
+              location.horizontalAccuracy <= Self.maxAccuracy else { return }
+
+        trackPoints.append(TrackPoint(location))
+
+        guard let anchor = distanceAnchor else {
+            distanceAnchor = location
+            return
         }
-        lastLocation = location
-        track.append(location.coordinate)
+        let delta = location.distance(from: anchor)
+        guard Self.isMoving(delta: delta, location: location) else { return }
+        distanceMeters += delta
+        distanceAnchor = location
+    }
+
+    /// 이보다 부정확한 위치는 기록하지 않는다(m)
+    private static let maxAccuracy: CLLocationAccuracy = 50
+
+    /// 실제로 움직였는지 판단한다. 멈춰 있어도 GPS 위치는 몇 m씩 흔들리므로,
+    /// 속도 정보가 있으면 걷는 속도의 절반(0.5m/s) 이상일 때만, 없으면 정확도보다 멀리 갔을 때만 거리로 친다.
+    private static func isMoving(delta: CLLocationDistance, location: CLLocation) -> Bool {
+        guard delta >= 3 else { return false }
+        if location.speed >= 0 {
+            return location.speed >= 0.5
+        }
+        return delta > location.horizontalAccuracy
+    }
+}
+
+/// 주행 경로의 점 하나. 서버에 올릴 때는 시각을 M 값으로 담는다(LINESTRING M, 노션 5-2).
+struct TrackPoint: Hashable {
+    let latitude: Double
+    let longitude: Double
+    let timestamp: Date
+    /// m/s. 알 수 없으면 nil
+    let speed: Double?
+    /// m
+    let horizontalAccuracy: Double
+
+    init(_ location: CLLocation) {
+        latitude = location.coordinate.latitude
+        longitude = location.coordinate.longitude
+        timestamp = location.timestamp
+        speed = location.speed >= 0 ? location.speed : nil
+        horizontalAccuracy = location.horizontalAccuracy
+    }
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
