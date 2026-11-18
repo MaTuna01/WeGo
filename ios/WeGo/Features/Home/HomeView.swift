@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var operatorFilter: BikeOperator?
     @State private var courseFilter: CourseFilter = .popular
     @State private var selectedCourseID: Course.ID?
+    @State private var detailCourseID: Course.ID?
     @State private var awaitingReturnFrom: Station?
     @State private var showDepartPrompt = false
 
@@ -108,6 +109,7 @@ struct HomeView: View {
                 filter: $courseFilter,
                 courses: stationCourses,
                 selectedCourseID: $selectedCourseID,
+                detailCourseID: $detailCourseID,
                 chosenCourseID: appState.plannedCourse?.id,
                 onChooseCourse: toggleChosenCourse,
                 onRent: { rent(at: station) }
@@ -125,6 +127,7 @@ struct HomeView: View {
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
     private func selectFirstCourse() {
         selectedCourseID = stationCourses.first?.id
+        detailCourseID = nil
     }
 
     /// 고른 카드를 이번 주행 코스로 지정하거나, 이미 지정돼 있으면 해제한다.

@@ -2,12 +2,13 @@ import SwiftUI
 
 /// 정류장 시트의 세로 코스 카드(362×125, Figma 299:121).
 /// 위: 코스 이름 + `>`, 아래: 출발 정류장(하늘색 점) ↔ 도착 정류장(주황 점)을 점선으로 잇는다.
-/// 선택된 카드는 주황 테두리.
+/// 선택된 카드는 주황 테두리. `onDetail`이 있으면 오른쪽 `>`가 코스 상세로 가는 버튼이 된다.
 struct CourseRow: View {
     let course: Course
     let startName: String
     let endName: String
     var isSelected = false
+    var onDetail: (() -> Void)?
 
     private let dotSize: CGFloat = 30
     /// 점 중심이 카드 좌우 끝에서 떨어진 거리(디자인: 왼쪽 점 x33, 오른쪽 점 x302 → 중심 48 / 317)
@@ -21,13 +22,21 @@ struct CourseRow: View {
                     .foregroundStyle(.black)
                     .lineLimit(1)
                     .padding(.horizontal, 44)
-                HStack {
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(.black)
+                if let onDetail {
+                    HStack {
+                        Spacer()
+                        Button(action: onDetail) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundStyle(.black)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHidden(true)
+                    }
+                    .padding(.trailing, 4)
                 }
-                .padding(.trailing, 23)
             }
             .frame(height: 21)
             .padding(.top, 14)
@@ -50,6 +59,7 @@ struct CourseRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(course.title), \(startName)에서 \(endName)까지")
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction(named: "코스 상세 보기") { onDetail?() }
     }
 
     /// 점 두 개와 점선, 그 아래 정류장 이름
