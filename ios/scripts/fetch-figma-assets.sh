@@ -29,7 +29,6 @@ splashAccent1|4b4172d6-b947-49fb-bf42-78e06b1b2a08|svg|143:357
 splashAccent2|a43dc64d-93fa-49e5-b909-955e81d4b66e|svg|143:358
 splashAccent3|01b8ff11-3f2b-4690-98b9-a7e5cfeca65b|svg|143:359
 duckRider|991c9b7b-675f-44d1-a189-46cc5e7f62a7|png|143:356 주황 헬멧 오리
-duckRiderLogin|3c9fa369-9308-4848-9175-270b98203325|png|143:398 주황 헬멧 오리(로그인)
 splashPhoto|1891875d-2da7-428b-8bb7-df6990c8e985|png|143:449 따릉이 사진
 splashLogoWego|321d729a-c6ab-4897-a428-7992527774d7|svg|143:451 WEGO 로고
 iconGoogle|14f753cd-4f6d-47d9-8769-32286922273e|svg|143:393
@@ -45,15 +44,6 @@ pinBikeBadge|9b956d83-b0d5-410a-b28a-cde586304290|svg|143:488
 pinStationSelected|0728bb3e-24aa-411b-80d6-91de3650e094|svg|143:500 선택된 정류장 핀
 pinSelectedBadge|b4708eab-e441-41e1-a0d2-8ea50937be05|svg|143:502
 pinSelectedBike|f62d6a53-d899-492d-9dac-c5d2314e49fa|svg|143:503
-tabHomeOn|c5d9d2c5-01fd-495e-b02c-0374c1740ccf|svg|138:474 탭 홈(활성)
-tabHomeOff|641fa41b-6ee4-4daa-8171-cc71a0ecfd17|svg|138:504 탭 홈(비활성)
-tabSavedOn|3a5535d6-fa55-4367-b11c-a2e07423c2fa|svg|138:472 탭 저장(활성)
-tabSavedOff|b81cd11f-2903-4503-9b7a-547527ddaeb1|svg|138:510 탭 저장(비활성)
-tabRideOff|f04bc9f1-fcc7-4906-9df4-2b5ae59d0c68|svg|138:496 탭 자전거(비활성)
-tabRideOn|7ef5d743-7e24-48eb-8e55-216b45272bb4|svg|143:467 탭 자전거(활성)
-tabRideWheel|a2d3d4c9-8633-45c4-8eca-129642a949b5|svg|143:509 탭 자전거 바퀴(활성)
-tabProfileOn|c1bb5ffe-b4f9-480b-be20-adf62ae91b43|svg|138:489 탭 내 정보(활성)
-tabProfileOff|73712b93-6f26-4e85-8b59-b1c2f66f6977|svg|138:505 탭 내 정보(비활성)
 "
 
 ok=0; failed=""
