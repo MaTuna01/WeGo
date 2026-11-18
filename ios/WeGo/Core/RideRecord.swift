@@ -80,19 +80,25 @@ final class RideRecord {
 }
 
 extension RideRecord {
-    /// 홈 "나의 이용 기록" 카드 이름: "11/18 원효대교 남단 강변길"(코스를 끝까지 안내받음) / "11/18 여의나루역 1번출구 앞 출발"
+    /// 홈 "나의 이용 기록" 카드 이름. 줄바꿈(\n)마다 한 줄씩, 줄마다 따로 줄인다(정류장 이름이 길어 카드 폭을 넘기 때문).
+    /// - 출발·도착 정류장이 매칭됨: "여의나루역 1번출구 앞\n→ 여의도 한강공원 원효대교 남단"
+    /// - 코스를 끝까지 안내받음: "원효대교 남단 강변길"
+    /// - 그 외: "여의나루역 1번출구 앞 출발"
     var cardTitle: String {
-        let parts = Calendar.current.dateComponents([.month, .day], from: startedAt)
-        let date = String(format: "%02d/%02d", parts.month ?? 0, parts.day ?? 0)
-        if let courseTitle, !courseCanceled {
-            return "\(date) \(courseTitle)"
+        if let endStationName {
+            return "\(matchedStartStationName ?? startStationName)\n→ \(endStationName)"
         }
-        return "\(date) \(startStationName) 출발"
+        if let courseTitle, !courseCanceled {
+            return courseTitle
+        }
+        return "\(matchedStartStationName ?? startStationName) 출발"
     }
 
-    /// 카드 아래 줄: 달린 거리 · 주행 시간(실측)
+    /// 카드 아래 줄: 날짜 · 달린 거리 · 주행 시간(실측)
     var cardSubtitle: String {
-        "\(WeGoFormat.distance(Int(distanceMeters.rounded()))) · \(WeGoFormat.minutes(ridingSeconds))"
+        let parts = Calendar.current.dateComponents([.month, .day], from: startedAt)
+        let date = String(format: "%02d/%02d", parts.month ?? 0, parts.day ?? 0)
+        return "\(date) · \(WeGoFormat.distance(Int(distanceMeters.rounded()))) · \(WeGoFormat.minutes(ridingSeconds))"
     }
 
     /// 끝난 주행 세션으로 기록을 만들고, 정류장 목록으로 출발·도착 정류장과 공유 구간을 판정해 넣는다.
