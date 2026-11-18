@@ -91,6 +91,31 @@ struct RideStatsPanel: View {
     }
 }
 
+/// 상단 "10분 전 알림 받기" 바(368×47, Figma 299:347·349~351): 문구와 작은 토글을 가운데에 둔다.
+struct RideReminderBar: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("10분 전 알림 받기")
+                .wegoFont(.regular, 14, tracking: -0.7)
+                .foregroundStyle(.black)
+            // 디자인 토글은 39×22라 기본 토글(51×31)을 줄여 쓴다.
+            Toggle("10분 전 알림 받기", isOn: $isOn)
+                .labelsHidden()
+                .tint(WeGoColor.primaryLight)
+                .scaleEffect(0.76)
+                .frame(width: 39, height: 24)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 47)
+        .background(.white, in: Capsule())
+        .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("1시간 기준 10분 전에 알림을 보내요")
+    }
+}
+
 /// 상단 응원 배너(360×60, Figma 299:393~395): 하늘 모자 오리 + 응원 문구
 /// 진행률에 따라 문구를 바꿀지는 디자이너와 정하기로 해서, 지금은 디자인의 기본 문구만 쓴다.
 struct RideCheerBanner: View {

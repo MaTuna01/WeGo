@@ -22,8 +22,20 @@ final class AppState {
 
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
+    @ObservationIgnored private let rideReminder = RideReminder()
     private static let loginKey = "wego.isLoggedIn"
     private static let guestKey = "wego.isGuest"
+    private static let reminderKey = "wego.rideReminderEnabled"
+
+    /// 주행 화면의 "10분 전 알림 받기"(기본 켬). 바꾸면 진행 중인 주행의 알림을 바로 예약하거나 취소한다.
+    var isRideReminderEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isRideReminderEnabled, forKey: Self.reminderKey)
+            updateRideReminder()
+        }
+    }
+    /// 알림 권한이 꺼져 있어 예약하지 못했을 때 true(주행 화면이 안내를 띄운다)
+    var isReminderPermissionDenied = false
 
     private(set) var isLoggedIn: Bool
     /// "비로그인으로 시작하기"로 들어온 상태. 지도·코스 보기·주행은 되고, 기록 저장·공유처럼 계정이 필요한 기능은 로그인을 요구한다.
@@ -32,6 +44,7 @@ final class AppState {
     init() {
         isLoggedIn = UserDefaults.standard.bool(forKey: Self.loginKey)
         isGuest = UserDefaults.standard.bool(forKey: Self.guestKey)
+        isRideReminderEnabled = UserDefaults.standard.object(forKey: Self.reminderKey) as? Bool ?? true
         RideActivityController.endAll()
         location.onRideUpdated = { [weak self] in
             guard let self, let ride = self.ride else { return }
@@ -80,6 +93,7 @@ final class AppState {
         location.activeRide = session
         location.requestPermission()
         rideActivity.start(for: session)
+        updateRideReminder()
         selectedTab = .ride
     }
 
@@ -92,8 +106,21 @@ final class AppState {
     /// TODO: 라이딩 요약 화면(디자인 대기) → 서버에 기록 저장
     func endRide() {
         rideActivity.end()
+        rideReminder.cancel()
         ride = nil
         location.activeRide = nil
         selectedTab = .home
+    }
+
+    private func updateRideReminder() {
+        guard let ride, isRideReminderEnabled else {
+            rideReminder.cancel()
+            return
+        }
+        Task { @MainActor in
+            let scheduled = await rideReminder.schedule(for: ride)
+            isReminderPermissionDenied = !scheduled
+            if !scheduled { isRideReminderEnabled = false }
+        }
     }
 }

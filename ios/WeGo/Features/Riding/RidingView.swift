@@ -14,16 +14,30 @@ struct RidingView: View {
 
     /// 하단 패널 높이(Figma 299:343). 지도 버튼은 패널 위로 띄운다.
     private let panelHeight: CGFloat = 202
-    /// 상단 "10분 전 알림 받기" 바(높이 47)가 들어갈 자리. 응원 배너는 그 아래에 둔다.
-    private let topBarReserve: CGFloat = 8 + 47 + 14
-
     var body: some View {
+        @Bindable var appState = appState
+
         RideMapView(session: session, heading: heading, position: $camera, lastCamera: $lastCamera)
             .ignoresSafeArea()
             .overlay(alignment: .top) {
-                RideCheerBanner()
-                    .padding(.horizontal, 21)
-                    .padding(.top, topBarReserve)
+                // 위: "10분 전 알림 받기" 바(좌우 17), 그 아래 14pt 띄워 응원 배너(좌우 21)
+                VStack(spacing: 14) {
+                    RideReminderBar(isOn: $appState.isRideReminderEnabled)
+                        .padding(.horizontal, 17)
+                    RideCheerBanner()
+                        .padding(.horizontal, 21)
+                }
+                .padding(.top, 8)
+            }
+            .alert("알림이 꺼져 있어요", isPresented: $appState.isReminderPermissionDenied) {
+                Button("설정 열기") {
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("닫기", role: .cancel) {}
+            } message: {
+                Text("10분 전 알림을 받으려면 설정에서 위고 알림을 허용해 주세요.")
             }
             .overlay(alignment: .bottomLeading) {
                 RideMapControls(
