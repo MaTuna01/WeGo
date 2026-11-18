@@ -14,6 +14,7 @@ struct RidingView: View {
     /// 반납하러 운영사 앱에 가 있는 동안 true. 돌아오면 반납 확인을 띄운다.
     @State private var awaitingReturn = false
     @State private var showReturnPrompt = false
+    @State private var showCancelCourse = false
 
     /// 하단 패널 높이(Figma 299:343). 지도 버튼은 패널 위로 띄운다.
     private let panelHeight: CGFloat = 202
@@ -61,13 +62,23 @@ struct RidingView: View {
                     RideStatsPanel(
                         stats: stats(at: context.date),
                         isPaused: session.isPaused,
-                        // TODO: 코스 취소 확인 모달 → 자유 주행 전환(다음 이슈)
-                        onCancelCourse: session.isFollowingCourse ? {} : nil,
+                        onCancelCourse: session.isFollowingCourse ? { showCancelCourse = true } : nil,
                         onReturn: goReturn
                     )
                 }
                 .frame(height: panelHeight)
             }
+            .overlay {
+                if showCancelCourse {
+                    RideCancelCourseModal(
+                        // TODO: 자유 주행 전환(다음 커밋)
+                        onConfirm: { showCancelCourse = false },
+                        onDismiss: { showCancelCourse = false }
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeOut(duration: 0.2), value: showCancelCourse)
             .onReturnFromOperatorApp(isAwaiting: awaitingReturn) {
                 showReturnPrompt = true
             }
