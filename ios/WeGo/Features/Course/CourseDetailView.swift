@@ -14,10 +14,30 @@ struct CourseDetailView: View {
             VStack(alignment: .leading, spacing: 0) {
                 CourseRow(course: course, startName: startName, endName: endName)
                     .overlay(alignment: .topLeading) { backButton }
+
+                sectionTitle("경사도")
+                    .padding(.top, 26)
+
+                // 경사도 카드(362×307). 아래쪽 코스 정보는 같은 카드 안에 이어 붙인다.
+                VStack(spacing: 0) {
+                    ElevationChart(course: course)
+                        .padding(.top, 53)
+                }
+                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
+                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.top, 2)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
         }
+    }
+
+    private func sectionTitle(_ text: String) -> some View {
+        Text(text)
+            .wegoFont(.regular, 14, tracking: -0.7)
+            .foregroundStyle(.black)
+            .frame(height: 21)
     }
 
     /// 카드 왼쪽 위 `<` (디자인: 카드 안 x8, y-9)
