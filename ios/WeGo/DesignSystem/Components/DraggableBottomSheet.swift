@@ -76,10 +76,12 @@ struct DraggableBottomSheet<Content: View>: View {
         GeometryReader { proxy in
             let heights = heights(proxy.size.height)
             let height = displayedHeight(heights)
+            let opacity = contentOpacity(height, heights)
             BottomSheetContainer(handleTopPadding: handleTopPadding) {
                 content
-                    .opacity(fadesContentWhenCollapsed ? contentOpacity(height, heights) : 1)
+                    .opacity(fadesContentWhenCollapsed ? opacity : 1)
                     .allowsHitTesting(!fadesContentWhenCollapsed || detent != .collapsed)
+                    .environment(\.sheetContentOpacity, opacity)
             }
             .frame(height: height)
             .overlay(alignment: .top) { handleAccessibility }
@@ -172,6 +174,29 @@ struct DraggableBottomSheet<Content: View>: View {
     }
 }
 
+extension EnvironmentValues {
+    /// 시트가 접힘에 가까울수록 0, 접힘보다 80pt 이상 위면 1
+    @Entry var sheetContentOpacity: Double = 1
+}
+
+extension View {
+    /// 시트가 접힐 때 흐려지며 사라질 부분에 붙인다(`fadesContentWhenCollapsed: false`로 일부만 숨길 때).
+    func fadesWhenSheetCollapses() -> some View {
+        modifier(SheetCollapseFade())
+    }
+}
+
+private struct SheetCollapseFade: ViewModifier {
+    @Environment(\.sheetContentOpacity) private var opacity
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(opacity)
+            .allowsHitTesting(opacity > 0.5)
+            .accessibilityHidden(opacity < 0.5)
+    }
+}
+
 /// 시트와 안쪽 스크롤이 주고받는 상태
 @Observable
 final class SheetScrollState {
@@ -195,36 +220,23 @@ struct SheetScrollView<Content: View>: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     Color.clear
-                        .frame(height: 0)
+                        .frame(height: 1)
                         .id(topID)
-                        .background {
-                            GeometryReader { proxy in
-                                Color.clear.preference(
-                                    key: SheetScrollTopKey.self,
-                                    value: proxy.frame(in: .named(spaceName)).minY
-                                )
-                            }
+                        .onGeometryChange(for: Bool.self) { proxy in
+                            proxy.frame(in: .named(spaceName)).minY >= -1
+                        } action: { isAtTop in
+                            state?.isAtTop = isAtTop
                         }
                     content
                 }
             }
             .coordinateSpace(.named(spaceName))
             .scrollDisabled(state.map { !$0.isExpanded } ?? false)
-            .onPreferenceChange(SheetScrollTopKey.self) { minY in
-                state?.isAtTop = minY >= -1
-            }
             .onChange(of: state?.isExpanded) { _, isExpanded in
                 if isExpanded == false {
                     withAnimation { reader.scrollTo(topID, anchor: .top) }
                 }
             }
         }
-    }
-}
-
-private struct SheetScrollTopKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }

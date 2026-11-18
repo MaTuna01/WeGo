@@ -33,9 +33,14 @@ struct StationMapView: View {
     }
 
     /// 코스 전체가 시트 위 지도 영역(상단 칩 아래 ~ 시트 위)에 들어오도록 하는 카메라 영역.
-    /// 874pt 화면 기준 보이는 지도 영역은 y 130~365인데, 선택된 정류장 핀이 좌표 위로 약 75pt 솟아 있어서
-    /// 위쪽은 그만큼 더 비운 y 205~365 안에 좌표가 들어오게 한다. 그 비율만큼 영역을 넓히고 중심을 남쪽으로 내린다.
-    static func region(fitting course: Course) -> MKCoordinateRegion? {
+    /// `visibleTop`·`visibleBottom`은 지도 높이에 대한 비율(0 = 맨 위)로, 좌표가 들어와야 하는 세로 범위다.
+    /// 선택된 정류장 핀이 좌표 위로 솟아 있으므로 `visibleTop`은 칩 아래끝보다 그만큼 더 내려서 준다.
+    /// 그 비율만큼 영역을 넓히고 중심을 남쪽으로 내린다. 기본값은 874pt 화면에서 시트가 기본 높이일 때(y 205~355).
+    static func region(
+        fitting course: Course,
+        visibleTop: Double = 205.0 / 874,
+        visibleBottom: Double = 355.0 / 874
+    ) -> MKCoordinateRegion? {
         let coordinates = course.coordinates
         guard let first = coordinates.first else { return nil }
         var minLat = first.latitude, maxLat = first.latitude
@@ -47,7 +52,6 @@ struct StationMapView: View {
             maxLon = max(maxLon, coordinate.longitude)
         }
 
-        let visibleTop = 205.0 / 874, visibleBottom = 355.0 / 874
         let visibleFraction = visibleBottom - visibleTop
         let visibleCenter = (visibleTop + visibleBottom) / 2
         let padding = 1.4

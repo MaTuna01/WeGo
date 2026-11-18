@@ -17,8 +17,11 @@ struct HomeView: View {
     @State private var awaitingReturnFrom: Station?
     @State private var showDepartPrompt = false
     @State private var sheetDetent: SheetDetent = .standard
+    // 아래 둘은 화면(global) 좌표. 지도는 화면 맨 위(상태 표시줄 뒤)부터 이 화면 아래끝까지 그려진다.
     /// 위 검색바·칩의 아래끝(시트를 펼쳤을 때 여기까지 올라온다)
-    @State private var topBarBottom: CGFloat = 100
+    @State private var topBarBottom: CGFloat = 160
+    /// 시트를 담는 영역(이 화면). 아래끝이 시트·지도의 아래끝이다.
+    @State private var containerFrame: CGRect = .zero
 
     private var visibleStations: [Station] {
         MockData.stations.filter { operatorFilter == nil || $0.bikeOperator == operatorFilter }
@@ -57,11 +60,9 @@ struct HomeView: View {
             )
             .padding(.horizontal, 20)
             .padding(.top, 8)
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.frame(in: .named(Self.space)).maxY
-            } action: { topBarBottom = $0 }
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: { topBarBottom = $0 }
         }
-        .coordinateSpace(.named(Self.space))
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { containerFrame = $0 }
         .overlay(alignment: .bottom) {
             sheet
         }
@@ -81,8 +82,15 @@ struct HomeView: View {
             selectFirstCourse()
         }
         .onChange(of: selectedCourseID) { _, _ in
-            guard let selectedCourse, let region = StationMapView.region(fitting: selectedCourse) else { return }
-            withAnimation { camera = .region(region) }
+            fitSelectedCourse()
+        }
+        .onChange(of: detailCourseID) { _, newID in
+            // 코스 상세로 들어가면 기본 높이에서 시작
+            if newID != nil { sheetDetent = .standard }
+        }
+        .onChange(of: sheetDetent) { _, _ in
+            // 시트 높이가 바뀌면 보이는 지도 영역도 바뀌므로 코스를 다시 맞춘다.
+            if selectedStation != nil { fitSelectedCourse() }
         }
         .onChange(of: operatorFilter) { _, _ in
             if let selectedStation, !visibleStations.contains(selectedStation) {
@@ -117,10 +125,10 @@ struct HomeView: View {
                 detailCourseID: $detailCourseID,
                 chosenCourseID: appState.plannedCourse?.id,
                 onChooseCourse: toggleChosenCourse,
-                onRent: { rent(at: station) }
+                onRent: { rent(at: station) },
+                detent: $sheetDetent,
+                heights: stationSheetHeights
             )
-            // Figma 299:121: 시트가 화면 위에서 365pt(874pt 기준)부터 시작
-            .containerRelativeFrame(.vertical) { height, _ in height * (874 - 365) / 874 }
             .transition(.move(edge: .bottom))
         } else {
             HomeSheet(
@@ -133,8 +141,6 @@ struct HomeView: View {
         }
     }
 
-    private static let space = "HomeView"
-
     /// 접힘: 플로팅 탭바(아래 여백 23 + 높이 58) 위로 손잡이만 보이게
     private static let collapsedSheetHeight: CGFloat = 23 + 58 + 24
 
@@ -143,8 +149,47 @@ struct HomeView: View {
         SheetHeights(
             collapsed: Self.collapsedSheetHeight,
             standard: 372,
-            expanded: containerHeight - topBarBottom - 12
+            expanded: expandedSheetHeight(containerHeight)
         )
+    }
+
+    /// 정류장 시트 접힘: 손잡이(위 13 + 5) + 버튼 위 여백 12 + 버튼 52 + 탭바 자리(24 + 58 + 23).
+    /// 하단 버튼은 어느 높이에서든 보여야 해서 홈 시트보다 높다.
+    private static let stationCollapsedSheetHeight: CGFloat = 13 + 5 + 12 + 52 + 24 + 58 + 23
+
+    /// 정류장·코스 상세 시트: 기본은 Figma 299:121·299:224처럼 화면 위에서 365pt(874pt 기준)부터
+    private func stationSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
+        SheetHeights(
+            collapsed: Self.stationCollapsedSheetHeight,
+            standard: screenHeight(containerHeight) * (874 - 365) / 874,
+            expanded: expandedSheetHeight(containerHeight)
+        )
+    }
+
+    /// 펼침: 위 검색바·칩 아래 12pt까지
+    private func expandedSheetHeight(_ containerHeight: CGFloat) -> CGFloat {
+        guard containerFrame.height > 0 else { return containerHeight * 0.85 }
+        return containerFrame.maxY - topBarBottom - 12
+    }
+
+    /// Figma 프레임(874pt)과 비교할 화면 전체 높이 = 지도 높이(화면 맨 위 ~ 이 화면 아래끝)
+    private func screenHeight(_ containerHeight: CGFloat) -> CGFloat {
+        containerFrame.maxY > 0 ? containerFrame.maxY : containerHeight
+    }
+
+    /// 선택한 코스가 위 칩과 시트 사이 지도 영역에 들어오도록 카메라를 옮긴다.
+    private func fitSelectedCourse() {
+        guard let selectedCourse, containerFrame.height > 0 else { return }
+        let mapHeight = containerFrame.maxY
+        let sheetTop = mapHeight - stationSheetHeights(containerFrame.height).height(for: sheetDetent)
+        // 선택한 정류장 핀이 좌표 위로 약 75pt 솟아 있어 위쪽은 그만큼 더 비운다. 아래는 시트에서 10pt 띄운다.
+        let top = (topBarBottom + 75) / mapHeight
+        let bottom = (sheetTop - 10) / mapHeight
+        // 시트를 펼쳐 지도가 거의 안 보이면 카메라는 그대로 둔다.
+        guard bottom - top > 0.08,
+              let region = StationMapView.region(fitting: selectedCourse, visibleTop: top, visibleBottom: bottom)
+        else { return }
+        withAnimation { camera = .region(region) }
     }
 
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
