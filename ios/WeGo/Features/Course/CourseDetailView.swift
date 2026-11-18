@@ -12,24 +12,92 @@ struct CourseDetailView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
-                CourseRow(course: course, startName: startName, endName: endName)
-                    .overlay(alignment: .topLeading) { backButton }
-
-                sectionTitle("경사도")
-                    .padding(.top, 26)
-
-                // 경사도 카드(362×307). 아래쪽 코스 정보는 같은 카드 안에 이어 붙인다.
-                VStack(spacing: 0) {
-                    ElevationChart(course: course)
-                        .padding(.top, 53)
-                }
-                .padding(.bottom, 24)
-                .frame(maxWidth: .infinity)
-                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.top, 2)
+                details
+                    .padding(.horizontal, 20)
+                // 후기 카드는 화면 오른쪽 끝까지 이어지도록 좌우 여백 밖에 둔다.
+                reviews
+                    .padding(.top, 9)
+                    .padding(.bottom, 8)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 8)
+        }
+    }
+
+    /// 출발 → 도착 카드, 경사도 카드(그래프 + 코스 정보), 후기 제목
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CourseRow(course: course, startName: startName, endName: endName)
+                .overlay(alignment: .topLeading) { backButton }
+
+            sectionTitle("경사도")
+                .padding(.top, 26)
+
+            // 경사도 카드(362×307): 위는 그래프, 구분선 아래는 코스 정보
+            VStack(spacing: 0) {
+                ElevationChart(course: course)
+                    .padding(.top, 53)
+                Rectangle()
+                    .fill(WeGoColor.border)
+                    .frame(height: 1)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 20)
+                stats
+                    .padding(.top, 18)
+            }
+            .padding(.bottom, 32)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(.top, 2)
+
+            sectionTitle("사용자 후기")
+                .padding(.top, 11)
+        }
+    }
+
+    /// 총거리 / 최고 고도 / 예상 시간. 예상 시간은 ±20% 오차라 "약 N분"으로만 보여준다.
+    private var stats: some View {
+        HStack(spacing: 0) {
+            stat("총거리", WeGoFormat.distance(course.distanceMeters))
+            stat("최고 고도", course.maxElevationMeters.map { "\(Int($0.rounded()))m" } ?? "정보 없음")
+            stat("예상 시간", WeGoFormat.approxMinutes(course.durationSeconds))
+        }
+        .padding(.horizontal, 8)
+    }
+
+    private func stat(_ title: String, _ value: String) -> some View {
+        VStack(spacing: 12) {
+            Text(title)
+                .wegoFont(.regular, 18, tracking: -0.5)
+                .foregroundStyle(WeGoColor.textBody)
+            Text(value)
+                .wegoFont(.semibold, 20, tracking: -0.5)
+                .foregroundStyle(.black)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// 가로로 넘기는 후기 카드(253×104). 카드가 화면 오른쪽 밖까지 이어지게 좌우 여백은 안쪽에만 둔다.
+    @ViewBuilder
+    private var reviews: some View {
+        if course.reviews.isEmpty {
+            Text("아직 후기가 없어요. 이 코스를 타고 첫 후기를 남겨 주세요.")
+                .wegoFont(.regular, 13)
+                .foregroundStyle(WeGoColor.gray500)
+                .frame(maxWidth: .infinity)
+                .frame(height: 104)
+                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, 20)
+        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 9) {
+                    ForEach(course.reviews) { review in
+                        ReviewCard(review: review)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
         }
     }
 
@@ -51,6 +119,63 @@ struct CourseDetailView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("코스 목록으로")
+    }
+}
+
+/// 후기 카드: 왼쪽 사진(107×86), 오른쪽 별점 5개와 후기 글(2줄)
+private struct ReviewCard: View {
+    let review: CourseReview
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 9) {
+            photo
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 3) {
+                    ForEach(1...5, id: \.self) { index in
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 15))
+                            .foregroundStyle(index <= review.rating ? WeGoColor.yellow : WeGoColor.gray300)
+                    }
+                }
+                Text(review.text)
+                    .wegoFont(.regular, 13, tracking: -0.4, lineHeight: 18)
+                    .foregroundStyle(.black)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .padding(.top, 21)
+            }
+            .padding(.top, 3)
+            Spacer(minLength: 0)
+        }
+        .padding(.leading, 8)
+        .padding(.trailing, 10)
+        .padding(.vertical, 9)
+        .frame(width: 253, height: 104, alignment: .topLeading)
+        .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("별점 \(review.rating)점. \(review.text)")
+    }
+
+    /// 후기 사진. 목업에는 사진이 없어 회색 자리만 둔다.
+    @ViewBuilder
+    private var photo: some View {
+        let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
+        if let name = review.photoName {
+            Image(name)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 107, height: 86)
+                .clipShape(shape)
+        } else {
+            shape
+                .fill(WeGoColor.placeholder)
+                .frame(width: 107, height: 86)
+                .overlay {
+                    Image(systemName: "photo")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white)
+                }
+        }
     }
 }
 
