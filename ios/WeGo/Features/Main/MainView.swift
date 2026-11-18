@@ -29,8 +29,11 @@ struct MainView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            WeGoTabBar(selection: $appState.selectedTab)
-                .padding(.bottom, 23)
+            // 주행 중(라이딩 탭에 진행 중인 주행이 있을 때)에는 탭바를 숨긴다(Figma 299:343).
+            if !(appState.selectedTab == .ride && appState.ride != nil) {
+                WeGoTabBar(selection: $appState.selectedTab)
+                    .padding(.bottom, 23)
+            }
         }
         .ignoresSafeArea(edges: .bottom)
     }

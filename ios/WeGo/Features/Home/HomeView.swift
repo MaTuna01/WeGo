@@ -6,7 +6,6 @@ import SwiftUI
 /// 대여 흐름: "대여하러 가기" → 따릉이/타슈 앱 열기 → 우리 앱으로 돌아오면 "출발하기" 확인 → 라이딩 시작
 struct HomeView: View {
     @Environment(AppState.self) private var appState
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
 
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
@@ -82,10 +81,8 @@ struct HomeView: View {
                 selectedStationID = nil
             }
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active, awaitingReturnFrom != nil {
-                showDepartPrompt = true
-            }
+        .onReturnFromOperatorApp(isAwaiting: awaitingReturnFrom != nil) {
+            showDepartPrompt = true
         }
         .alert("대여를 마쳤나요?", isPresented: $showDepartPrompt, presenting: awaitingReturnFrom) { station in
             Button("출발하기") {
@@ -144,10 +141,8 @@ struct HomeView: View {
 
     private func rent(at station: Station) {
         awaitingReturnFrom = station
-        openURL(RentalAppLauncher.url(for: station.bikeOperator)) { accepted in
-            // 시뮬레이터처럼 다른 앱을 못 여는 환경에서는 바로 출발 확인을 띄운다.
-            if !accepted { showDepartPrompt = true }
-        }
+        // 시뮬레이터처럼 다른 앱을 못 여는 환경에서는 바로 출발 확인을 띄운다.
+        RentalAppLauncher.open(station.bikeOperator, using: openURL) { showDepartPrompt = true }
     }
 }
 
