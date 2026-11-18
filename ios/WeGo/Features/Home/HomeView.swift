@@ -30,10 +30,19 @@ struct HomeView: View {
         return MockData.courses(from: selectedStation, filter: courseFilter)
     }
 
+    private var selectedCourse: Course? {
+        stationCourses.first { $0.id == selectedCourseID }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
-            StationMapView(stations: visibleStations, selectedID: $selectedStationID, position: $camera)
-                .ignoresSafeArea()
+            StationMapView(
+                stations: visibleStations,
+                selectedID: $selectedStationID,
+                position: $camera,
+                course: selectedCourse
+            )
+            .ignoresSafeArea()
 
             MapTopBar(
                 title: selectedStation?.name,
@@ -58,6 +67,10 @@ struct HomeView: View {
         }
         .onChange(of: courseFilter) { _, _ in
             selectFirstCourse()
+        }
+        .onChange(of: selectedCourseID) { _, _ in
+            guard let selectedCourse, let region = StationMapView.region(fitting: selectedCourse) else { return }
+            withAnimation { camera = .region(region) }
         }
         .onChange(of: operatorFilter) { _, _ in
             if let selectedStation, !visibleStations.contains(selectedStation) {
