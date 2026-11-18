@@ -149,8 +149,13 @@ final class AppState {
             RideActivityController.endAll()
             return
         }
-        let course = MockData.courses.first { $0.id == snapshot.courseID }
-        let initialCourse = MockData.courses.first { $0.id == snapshot.initialCourseID }
+        // 코스는 목업 코스에서 찾고, 없으면 내 기록에서 만든 코스(ride-...)에서 찾는다.
+        func findCourse(_ id: String?) -> Course? {
+            guard let id else { return nil }
+            return MockData.courses.first { $0.id == id } ?? rideRecords.course(id: id)
+        }
+        let course = findCourse(snapshot.courseID)
+        let initialCourse = findCourse(snapshot.initialCourseID)
         let session = RideSession(restoring: snapshot, station: station, course: course, initialCourse: initialCourse)
 
         if Date.now.timeIntervalSince(session.startedAt) > Self.restoreLimit {
