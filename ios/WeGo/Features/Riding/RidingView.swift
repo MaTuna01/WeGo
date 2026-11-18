@@ -6,11 +6,14 @@ import SwiftUI
 struct RidingView: View {
     @Environment(AppState.self) private var appState
     @Environment(LocationService.self) private var location
+    @Environment(\.openURL) private var openURL
     let session: RideSession
 
     @State private var camera: MapCameraPosition = .userLocation(followsHeading: false, fallback: .region(MockData.defaultRegion))
     @State private var lastCamera: MapCamera?
-    @State private var confirmStop = false
+    /// 반납하러 운영사 앱에 가 있는 동안 true. 돌아오면 반납 확인을 띄운다.
+    @State private var awaitingReturn = false
+    @State private var showReturnPrompt = false
 
     /// 하단 패널 높이(Figma 299:343). 지도 버튼은 패널 위로 띄운다.
     private let panelHeight: CGFloat = 202
@@ -60,20 +63,32 @@ struct RidingView: View {
                         isPaused: session.isPaused,
                         // TODO: 코스 취소 확인 모달 → 자유 주행 전환(다음 이슈)
                         onCancelCourse: session.isFollowingCourse ? {} : nil,
-                        // TODO: 운영사 앱으로 반납 → 복귀 확인 → 종료. 그 전까지는 종료 확인만 띄운다.
-                        onReturn: { confirmStop = true }
+                        onReturn: goReturn
                     )
                 }
                 .frame(height: panelHeight)
             }
-            .confirmationDialog("주행을 그만할까요?", isPresented: $confirmStop, titleVisibility: .visible) {
-                Button("주행 그만하기", role: .destructive) {
+            .onReturnFromOperatorApp(isAwaiting: awaitingReturn) {
+                showReturnPrompt = true
+            }
+            .alert("반납을 마쳤나요?", isPresented: $showReturnPrompt) {
+                Button("반납 완료") {
+                    awaitingReturn = false
                     appState.endRide()
                 }
-                Button("계속 달리기", role: .cancel) {}
+                Button("아직이에요", role: .cancel) {
+                    awaitingReturn = false
+                }
             } message: {
-                Text("반납은 \(session.startStation.bikeOperator.displayName) 앱에서 해 주세요.")
+                Text("\(session.startStation.bikeOperator.displayName) 앱에서 반납했다면 반납 완료를 눌러 주세요. 주행 기록이 끝나요.")
             }
+    }
+
+    /// 반납하러가기: 운영사 앱을 열고, 돌아오면 반납 확인을 띄운다.
+    private func goReturn() {
+        awaitingReturn = true
+        // 시뮬레이터처럼 다른 앱을 못 여는 환경에서는 바로 반납 확인을 띄운다.
+        RentalAppLauncher.open(session.startStation.bikeOperator, using: openURL) { showReturnPrompt = true }
     }
 
     private func stats(at date: Date) -> RideStats {
