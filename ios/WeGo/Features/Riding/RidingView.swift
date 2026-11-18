@@ -1,27 +1,24 @@
 import MapKit
 import SwiftUI
 
-/// 라이딩 중 (Figma 143:420): 지도 + 하단 패널(추가요금 · 주행 시간 · 거리, 주행 그만하기 / 일시정지)
+/// 코스 안내 주행 (Figma 299:343): 지도(코스·지나온 경로, 오리 위치 표시) + 지도 버튼 + 일시정지 + 하단 패널.
+/// 주행 중에는 하단 탭바를 숨긴다(MainView).
 struct RidingView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LocationService.self) private var location
     let session: RideSession
     var farePolicy: any FarePolicy = TtareungyiFarePolicy()
 
     @State private var camera: MapCameraPosition = .userLocation(followsHeading: false, fallback: .region(MockData.defaultRegion))
+    @State private var lastCamera: MapCamera?
     @State private var confirmStop = false
+
+    /// 하단 패널 높이. 지도 버튼은 패널 위로 띄운다.
+    private let panelHeight: CGFloat = 262
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Map(position: $camera) {
-                UserAnnotation {
-                    CurrentLocationMarker()
-                }
-                if session.track.count > 1 {
-                    MapPolyline(coordinates: session.track)
-                        .stroke(WeGoColor.primary, lineWidth: 5)
-                }
-            }
-            .mapStyle(.standard(pointsOfInterest: .excludingAll))
+            RideMapView(session: session, heading: heading, position: $camera, lastCamera: $lastCamera)
                 .ignoresSafeArea()
 
             TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -29,6 +26,20 @@ struct RidingView: View {
             }
             .padding(.leading, 20)
             .padding(.top, 8)
+        }
+        .overlay(alignment: .bottomLeading) {
+            RideMapControls(
+                onZoomIn: { zoom(by: 0.5) },
+                onZoomOut: { zoom(by: 2) },
+                onRecenter: { withAnimation { camera = .userLocation(followsHeading: false, fallback: .region(MockData.defaultRegion)) } }
+            )
+            .padding(.leading, 20)
+            .padding(.bottom, panelHeight + 22)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            RidePauseButton(isPaused: session.isPaused) { appState.togglePauseRide() }
+                .padding(.trailing, 16)
+                .padding(.bottom, panelHeight + 26)
         }
         .overlay(alignment: .bottom) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -41,7 +52,7 @@ struct RidingView: View {
                     onTogglePause: { appState.togglePauseRide() }
                 )
             }
-            .frame(height: 262)
+            .frame(height: panelHeight)
         }
         .confirmationDialog("주행을 그만할까요?", isPresented: $confirmStop, titleVisibility: .visible) {
             Button("주행 그만하기", role: .destructive) {
@@ -50,6 +61,24 @@ struct RidingView: View {
             Button("계속 달리기", role: .cancel) {}
         } message: {
             Text("반납은 \(session.startStation.bikeOperator.displayName) 앱에서 해 주세요.")
+        }
+    }
+
+    /// 움직일 때 GPS가 주는 진행 방향. 멈춰 있으면 방향을 알 수 없어 화살표를 숨긴다.
+    private var heading: Double? {
+        guard let last = location.lastLocation, last.course >= 0, last.speed >= 0.5 else { return nil }
+        return last.course
+    }
+
+    /// factor < 1이면 확대, > 1이면 축소
+    private func zoom(by factor: Double) {
+        let base = lastCamera ?? MapCamera(
+            centerCoordinate: location.lastLocation?.coordinate ?? session.startStation.coordinate,
+            distance: 1500
+        )
+        let distance = min(max(base.distance * factor, 200), 50_000)
+        withAnimation {
+            camera = .camera(MapCamera(centerCoordinate: base.centerCoordinate, distance: distance, heading: base.heading, pitch: 0))
         }
     }
 }
