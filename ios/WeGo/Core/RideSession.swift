@@ -201,6 +201,9 @@ struct TrackPoint: Hashable, Codable {
     let speed: Double?
     /// m
     let horizontalAccuracy: Double
+    /// 해발 고도(m). GPS가 고도를 모르면 nil. 경사도 그래프·최고 고도에 쓴다.
+    /// 고도를 저장하기 전에 만든 기록·진행 중 주행 파일에는 이 값이 없어서, 자동 Codable이 nil로 읽는다.
+    let altitude: Double?
 
     init(_ location: CLLocation) {
         latitude = location.coordinate.latitude
@@ -208,6 +211,7 @@ struct TrackPoint: Hashable, Codable {
         timestamp = location.timestamp
         speed = location.speed >= 0 ? location.speed : nil
         horizontalAccuracy = location.horizontalAccuracy
+        altitude = location.verticalAccuracy > 0 ? location.altitude : nil
     }
 
     var coordinate: CLLocationCoordinate2D {
