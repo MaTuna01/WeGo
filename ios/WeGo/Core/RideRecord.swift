@@ -208,6 +208,14 @@ final class RideRecordStore {
         }
     }
 
+    /// 내 기록에서 만든 코스(`ride-<기록 ID>`)를 다시 찾는다. 진행 중 주행 복구 때 쓴다.
+    func course(id: String) -> Course? {
+        guard id.hasPrefix("ride-"), let uuid = UUID(uuidString: String(id.dropFirst("ride-".count))) else { return nil }
+        var descriptor = FetchDescriptor<RideRecord>(predicate: #Predicate { $0.id == uuid })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first?.makeCourse()
+    }
+
     func count() -> Int {
         (try? context.fetchCount(FetchDescriptor<RideRecord>())) ?? 0
     }

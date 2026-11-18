@@ -18,6 +18,12 @@ struct HomeView: View {
         return descriptor
     }
 
+    /// 정류장 시트 최신 탭에 섞어 보여줄 내 공유 가능 기록
+    @Query(filter: #Predicate<RideRecord> { $0.isShareable == true }, sort: \RideRecord.endedAt, order: .reverse)
+    private var shareableRides: [RideRecord]
+    /// 고른 정류장에서 출발한 내 기록을 코스로 만든 것. 경로 압축을 매번 풀지 않게 정류장·기록이 바뀔 때만 다시 만든다.
+    @State private var myRideCourses: [Course] = []
+
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
     @State private var selectedStationID: Station.ID?
     @State private var operatorFilter: BikeOperator?
@@ -41,9 +47,13 @@ struct HomeView: View {
         MockData.stations.first { $0.id == selectedStationID }
     }
 
+    /// 정류장 시트 코스 목록. 서버 공유 경로가 생기기 전까지 목업 코스를 쓰고,
+    /// 최신 탭에는 이 정류장에서 출발한 내 기록을 날짜순으로 섞는다(인기 지표가 없어 인기 탭에는 넣지 않음).
     private var stationCourses: [Course] {
         guard let selectedStation else { return [] }
-        return MockData.courses(from: selectedStation, filter: courseFilter)
+        let courses = MockData.courses(from: selectedStation, filter: courseFilter)
+        guard courseFilter == .recent else { return courses }
+        return (courses + myRideCourses).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
     }
 
     private var selectedCourse: Course? {
@@ -82,11 +92,15 @@ struct HomeView: View {
         }
         .onChange(of: selectedStationID) { _, newID in
             sheetDetent = .standard
+            refreshMyRideCourses()
             selectFirstCourse()
             // 다른 정류장으로 바꾸면 그 정류장에서 출발하지 않는 지정 코스는 풀어 준다.
             if appState.plannedCourse?.startStationID != newID {
                 appState.plannedCourse = nil
             }
+        }
+        .onChange(of: shareableRides.map(\.id)) { _, _ in
+            refreshMyRideCourses()
         }
         .onChange(of: courseFilter) { _, _ in
             selectFirstCourse()
@@ -200,6 +214,14 @@ struct HomeView: View {
               let region = StationMapView.region(fitting: selectedCourse, visibleTop: top, visibleBottom: bottom)
         else { return }
         withAnimation { camera = .region(region) }
+    }
+
+    private func refreshMyRideCourses() {
+        guard let selectedStationID else {
+            myRideCourses = []
+            return
+        }
+        myRideCourses = shareableRides.shareable(departingFrom: selectedStationID).compactMap { $0.makeCourse() }
     }
 
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).

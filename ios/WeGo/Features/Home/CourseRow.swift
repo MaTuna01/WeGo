@@ -17,11 +17,16 @@ struct CourseRow: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                Text(course.title)
-                    .wegoFont(.regular, 14, tracking: -0.7)
-                    .foregroundStyle(.black)
-                    .lineLimit(1)
-                    .padding(.horizontal, 44)
+                HStack(spacing: 6) {
+                    if course.isMyRide {
+                        MyRideBadge()
+                    }
+                    Text(course.title)
+                        .wegoFont(.regular, 14, tracking: -0.7)
+                        .foregroundStyle(.black)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 44)
                 if let onDetail {
                     HStack {
                         Spacer()
@@ -57,7 +62,7 @@ struct CourseRow: View {
         }
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(course.title), \(startName)에서 \(endName)까지")
+        .accessibilityLabel("\(course.isMyRide ? "내 기록, " : "")\(course.title), \(startName)에서 \(endName)까지")
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction(named: "코스 상세 보기") { onDetail?() }
     }
@@ -112,4 +117,17 @@ struct CourseRow: View {
     }
     .padding(20)
     .background(WeGoColor.surface)
+}
+
+/// 내 주행 기록에서 만든 코스 표시. 디자인이 없어 임시 모양(연한 주황 캡슐)이다.
+struct MyRideBadge: View {
+    var body: some View {
+        Text("내 기록")
+            .wegoFont(.medium, 11, tracking: -0.3)
+            .foregroundStyle(WeGoColor.primary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(WeGoColor.peach, in: Capsule())
+            .fixedSize()
+    }
 }
