@@ -55,6 +55,8 @@ struct Course: Identifiable, Hashable {
     /// 내가 북마크한 코스인지(저장 코스 탭)
     var isSaved = false
     var createdAt: Date?
+    /// 내 주행 기록에서 만든 코스인지(정류장 시트에 "내 기록"으로 표시). 서버 공유 경로가 생기기 전까지 목업 코스와 섞어 보여준다.
+    var isMyRide = false
 
     var coordinates: [CLLocationCoordinate2D] {
         path.map(\.coordinate)
