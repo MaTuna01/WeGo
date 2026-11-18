@@ -11,19 +11,19 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AA00000000000000000000D6 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA00000000000000000000A9 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA00000000000000000000A6;
-			remoteInfo = WeGo;
-		};
 		AA00000000000000000000CE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA00000000000000000000A9 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AA00000000000000000000C4;
 			remoteInfo = RideWidget;
+		};
+		AA00000000000000000000D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA00000000000000000000A9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA00000000000000000000A6;
+			remoteInfo = WeGo;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -43,8 +43,8 @@
 
 /* Begin PBXFileReference section */
 		AA00000000000000000000A1 /* WeGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WeGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA00000000000000000000D0 /* WeGoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WeGoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA00000000000000000000C1 /* RideWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RideWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA00000000000000000000D0 /* WeGoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WeGoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
