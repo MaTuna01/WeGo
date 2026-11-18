@@ -62,6 +62,8 @@ struct StationSheet: View {
     let courses: [Course]
     /// 카드를 눌러 고른 코스(주황 테두리, 지도에 경로 표시)
     @Binding var selectedCourseID: Course.ID?
+    /// `>`로 연 코스 상세. 있으면 목록 대신 상세를 보여준다(Figma 299:224).
+    @Binding var detailCourseID: Course.ID?
     /// "코스 선택하기"로 이번 주행 코스로 지정한 코스
     let chosenCourseID: Course.ID?
     let onChooseCourse: () -> Void
@@ -73,6 +75,28 @@ struct StationSheet: View {
     var body: some View {
         BottomSheetContainer(handleTopPadding: 13) {
             VStack(alignment: .leading, spacing: 0) {
+                if let detailCourse = courses.first(where: { $0.id == detailCourseID }) {
+                    CourseDetailView(
+                        course: detailCourse,
+                        startName: startName(of: detailCourse),
+                        endName: endName(of: detailCourse),
+                        onBack: { detailCourseID = nil }
+                    )
+                    .padding(.top, 14)
+                } else {
+                    listContent
+                }
+
+                buttons
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, tabBarReserve)
+            }
+        }
+    }
+
+    private var listContent: some View {
+        VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
                     ForEach(CourseFilter.allCases, id: \.self) { item in
                         PillChip(
@@ -93,13 +117,15 @@ struct StationSheet: View {
 
                 courseList
                     .padding(.top, 20)
-
-                buttons
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-                    .padding(.bottom, tabBarReserve)
-            }
         }
+    }
+
+    private func startName(of course: Course) -> String {
+        MockData.station(id: course.startStationID)?.name ?? station.name
+    }
+
+    private func endName(of course: Course) -> String {
+        MockData.station(id: course.endStationID)?.name ?? "도착 정류장"
     }
 
     @ViewBuilder
@@ -113,17 +139,17 @@ struct StationSheet: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
                     ForEach(courses) { course in
-                        Button {
-                            selectedCourseID = course.id
-                        } label: {
-                            CourseRow(
-                                course: course,
-                                startName: MockData.station(id: course.startStationID)?.name ?? station.name,
-                                endName: MockData.station(id: course.endStationID)?.name ?? "도착 정류장",
-                                isSelected: selectedCourseID == course.id
-                            )
-                        }
-                        .buttonStyle(.plain)
+                        CourseRow(
+                            course: course,
+                            startName: startName(of: course),
+                            endName: endName(of: course),
+                            isSelected: selectedCourseID == course.id,
+                            onDetail: {
+                                selectedCourseID = course.id
+                                detailCourseID = course.id
+                            }
+                        )
+                        .onTapGesture { selectedCourseID = course.id }
                     }
                 }
                 .padding(.horizontal, 20)
