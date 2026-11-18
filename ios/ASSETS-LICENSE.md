@@ -16,7 +16,7 @@ Copyright © 2026 WeGo 팀. All rights reserved.
 
 | 에셋 | 내용 |
 |---|---|
-| `duckRider`, `duckRiderLogin` | 주황 헬멧 오리 자전거 일러스트 |
+| `duckRider` | 주황 헬멧 오리 자전거 일러스트 |
 | `splashPhoto` | 스플래시 사진 |
 | `splashLogoKo`, `splashLogoWego` | 위고 손글씨 로고, WEGO 로고 |
 | `splashLine1`~`splashLine4`, `splashAccent1`~`splashAccent3` | 스플래시 장식 선 |

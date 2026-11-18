@@ -6,7 +6,7 @@ SwiftUI · iOS 17+ · Xcode 16+ (폴더 동기화 그룹 사용 — `WeGo/` 안�
 
 ```sh
 cd ios
-sh scripts/fetch-figma-assets.sh   # Figma 에셋 34개 + Pretendard 폰트 내려받기
+sh scripts/fetch-figma-assets.sh   # Figma 에셋 24개 + Pretendard 폰트 내려받기
 open WeGo.xcodeproj                # 시뮬레이터(iPhone 17) 선택 후 ⌘R
 ```
 
