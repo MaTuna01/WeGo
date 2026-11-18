@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var selectedStationID: Station.ID?
     @State private var operatorFilter: BikeOperator?
     @State private var courseFilter: CourseFilter = .popular
+    @State private var selectedCourseID: Course.ID?
     @State private var awaitingReturnFrom: Station?
     @State private var showDepartPrompt = false
 
@@ -22,6 +23,11 @@ struct HomeView: View {
 
     private var selectedStation: Station? {
         MockData.stations.first { $0.id == selectedStationID }
+    }
+
+    private var stationCourses: [Course] {
+        guard let selectedStation else { return [] }
+        return MockData.courses(from: selectedStation, filter: courseFilter)
     }
 
     var body: some View {
@@ -46,6 +52,12 @@ struct HomeView: View {
         .animation(.spring(duration: 0.3), value: selectedStationID)
         .onAppear {
             appState.location.requestPermission()
+        }
+        .onChange(of: selectedStationID) { _, _ in
+            selectFirstCourse()
+        }
+        .onChange(of: courseFilter) { _, _ in
+            selectFirstCourse()
         }
         .onChange(of: operatorFilter) { _, _ in
             if let selectedStation, !visibleStations.contains(selectedStation) {
@@ -77,16 +89,24 @@ struct HomeView: View {
             StationSheet(
                 station: station,
                 filter: $courseFilter,
-                courses: MockData.courses(from: station, filter: courseFilter),
+                courses: stationCourses,
+                selectedCourseID: $selectedCourseID,
+                onChooseCourse: {},
                 onRent: { rent(at: station) }
             )
-            .frame(height: 361)
+            // Figma 299:121: 시트가 화면 위에서 365pt(874pt 기준)부터 시작
+            .containerRelativeFrame(.vertical) { height, _ in height * (874 - 365) / 874 }
             .transition(.move(edge: .bottom))
         } else {
             HomeSheet(popularCourses: MockData.popularCourses, myRides: MockData.myRides)
                 .frame(height: 372)
                 .transition(.move(edge: .bottom))
         }
+    }
+
+    /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
+    private func selectFirstCourse() {
+        selectedCourseID = stationCourses.first?.id
     }
 
     private func rent(at station: Station) {

@@ -54,13 +54,19 @@ struct HomeSheet: View {
     }
 }
 
-/// 정류장 선택 후 시트 (Figma 143:458): 인기/최신/저장 코스 + 대여하러 가기
+/// 정류장 선택 후 시트 (Figma 299:121): 인기/최신/저장 코스 탭, 세로 코스 카드 목록, 코스 선택하기 / 대여하러 가기
 /// 기획상 필요한 "잔여 대수(참고)"는 시안에 자리가 없어 아직 넣지 않았다 — 디자이너와 위치 결정 필요.
 struct StationSheet: View {
     let station: Station
     @Binding var filter: CourseFilter
     let courses: [Course]
+    /// 카드를 눌러 고른 코스(주황 테두리, 지도에 경로 표시)
+    @Binding var selectedCourseID: Course.ID?
+    let onChooseCourse: () -> Void
     let onRent: () -> Void
+
+    /// 하단 버튼 아래로 플로팅 탭바(58)와 여백(위 24, 아래 23)이 들어갈 자리
+    private let tabBarReserve: CGFloat = 24 + 58 + 23
 
     var body: some View {
         BottomSheetContainer(handleTopPadding: 13) {
@@ -83,46 +89,67 @@ struct StationSheet: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 17)
 
-                Group {
-                    if courses.isEmpty {
-                        Text(filter == .saved ? "아직 저장한 코스가 없어요." : "이 정류장에서 출발한 코스가 아직 없어요.")
-                            .wegoFont(.regular, 13)
-                            .foregroundStyle(WeGoColor.gray500)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 103)
-                    } else {
-                        ScrollView(showsIndicators: false) {
-                            VStack(spacing: 12) {
-                                ForEach(courses) { course in
-                                    CourseRow(
-                                        course: course,
-                                        startName: MockData.station(id: course.startStationID)?.name ?? station.name,
-                                        endName: MockData.station(id: course.endStationID)?.name ?? "도착 정류장"
-                                    )
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                }
-                .padding(.top, 15)
+                courseList
+                    .padding(.top, 20)
 
-                Button(action: onRent) {
-                    Text("대여하러 가기")
-                        .wegoFont(.bold, 18)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(WeGoColor.buttonDark, in: Capsule())
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                .accessibilityHint("\(station.bikeOperator.displayName) 앱으로 이동해 대여해요")
-
-                Spacer(minLength: 0)
+                buttons
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, tabBarReserve)
             }
         }
+    }
+
+    @ViewBuilder
+    private var courseList: some View {
+        if courses.isEmpty {
+            Text(filter == .saved ? "아직 저장한 코스가 없어요." : "이 정류장에서 출발한 코스가 아직 없어요.")
+                .wegoFont(.regular, 13)
+                .foregroundStyle(WeGoColor.gray500)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 12) {
+                    ForEach(courses) { course in
+                        Button {
+                            selectedCourseID = course.id
+                        } label: {
+                            CourseRow(
+                                course: course,
+                                startName: MockData.station(id: course.startStationID)?.name ?? station.name,
+                                endName: MockData.station(id: course.endStationID)?.name ?? "도착 정류장",
+                                isSelected: selectedCourseID == course.id
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+            }
+        }
+    }
+
+    /// 173×52 버튼 두 개, 간격 16
+    private var buttons: some View {
+        HStack(spacing: 16) {
+            sheetButton("코스 선택하기", background: WeGoColor.gray500, action: onChooseCourse)
+                .disabled(selectedCourseID == nil)
+            sheetButton("대여하러 가기", background: WeGoColor.buttonDark, action: onRent)
+                .accessibilityHint("\(station.bikeOperator.displayName) 앱으로 이동해 대여해요")
+        }
+    }
+
+    private func sheetButton(_ title: String, background: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .wegoFont(.medium, 18, tracking: -0.5)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(background, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
