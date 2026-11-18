@@ -1,20 +1,36 @@
 import SwiftUI
 
-/// 코스 썸네일 카드. 와이어프레임은 회색 자리(#C7C7C7)뿐이라 코스 이름·거리만 얹었다.
+/// 코스·주행 기록 썸네일 카드. 와이어프레임은 회색 자리(#C7C7C7)뿐이라 이름과 거리·시간만 얹었다.
 /// TODO: 서버가 만드는 경로 이미지(썸네일)로 교체
 struct CourseCard: View {
-    let course: Course
+    let title: String
+    let subtitle: String
     var showsMenu = false
+
+    /// 코스: 거리 · 예상 시간("약 N분")
+    init(course: Course, showsMenu: Bool = false) {
+        self.init(
+            title: course.title,
+            subtitle: "\(WeGoFormat.distance(course.distanceMeters)) · \(WeGoFormat.approxMinutes(course.durationSeconds))",
+            showsMenu: showsMenu
+        )
+    }
+
+    init(title: String, subtitle: String, showsMenu: Bool = false) {
+        self.title = title
+        self.subtitle = subtitle
+        self.showsMenu = showsMenu
+    }
 
     var body: some View {
         Rectangle()
             .fill(WeGoColor.placeholder)
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(course.title)
+                    Text(title)
                         .wegoFont(.semibold, 13, tracking: -0.4)
                         .lineLimit(1)
-                    Text("\(WeGoFormat.distance(course.distanceMeters)) · \(WeGoFormat.approxMinutes(course.durationSeconds))")
+                    Text(subtitle)
                         .wegoFont(.regular, 11, tracking: -0.3)
                         .lineLimit(1)
                 }

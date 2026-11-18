@@ -31,6 +31,22 @@ final class RideActivityController {
         }
     }
 
+    /// 앱이 꺼졌다 켜져 주행을 복구했을 때. 남아 있는 같은 주행의 Live Activity를 이어 쓰고, 없으면 새로 시작한다.
+    func resume(for session: RideSession) {
+        lastDistanceStep = Int(session.distanceMeters / 100)
+        let existing = Activity<RideActivityAttributes>.activities
+        if let match = existing.first(where: { $0.attributes.startedAt == session.startedAt }) {
+            activity = match
+            // 같은 주행이 아닌 것은 정리한다.
+            for other in existing where other.id != match.id {
+                Task { await other.end(nil, dismissalPolicy: .immediate) }
+            }
+            refresh(for: session)
+        } else {
+            start(for: session)
+        }
+    }
+
     /// 일시정지·재개 직후
     func refresh(for session: RideSession) {
         push(content(for: session))
@@ -50,7 +66,7 @@ final class RideActivityController {
         Task { await activity.end(nil, dismissalPolicy: .immediate) }
     }
 
-    /// 라이딩은 아직 기기에 저장하지 않으므로, 앱이 종료됐다 다시 켜지면 남은 Live Activity를 정리한다.
+    /// 복구할 주행이 없는데 남아 있는 Live Activity를 정리한다(앱 재실행 시).
     static func endAll() {
         let leftovers = Activity<RideActivityAttributes>.activities
         guard !leftovers.isEmpty else { return }

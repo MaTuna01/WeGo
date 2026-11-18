@@ -15,9 +15,13 @@ final class RideSession {
     let startedAt: Date
 
     private(set) var course: Course?
+    /// 출발할 때 안내받기로 한 코스. 중간에 코스를 취소해도 남는다(기록용).
+    let initialCourse: Course?
     private(set) var isPaused = false
     private(set) var distanceMeters: CLLocationDistance = 0
     private(set) var trackPoints: [TrackPoint] = []
+    /// 새 구간이 시작되는 `trackPoints` 인덱스(0 제외). 앱이 꺼졌다 복구되면 그 사이를 직선으로 잇지 않으려고 끊는다.
+    private(set) var segmentStarts: [Int] = []
 
     /// 일시정지 중이면 멈춘 시각
     @ObservationIgnored private(set) var pausedAt: Date?
@@ -29,6 +33,7 @@ final class RideSession {
         self.startStation = startStation
         self.pass = pass
         self.course = course
+        self.initialCourse = course
         self.startedAt = startedAt
     }
 
@@ -82,6 +87,11 @@ final class RideSession {
         trackPoints.map(\.coordinate)
     }
 
+    /// 끊긴 곳(앱이 꺼져 있던 구간)을 기준으로 나눈 경로. 지도는 구간마다 따로 그린다.
+    var trackSegments: [[CLLocationCoordinate2D]] {
+        TrackSegments.split(trackPoints.map(\.coordinate), at: segmentStarts)
+    }
+
     func record(_ location: CLLocation) {
         guard !isPaused,
               location.horizontalAccuracy >= 0,
@@ -113,8 +123,77 @@ final class RideSession {
     }
 }
 
+// MARK: - 진행 중 주행 저장·복구
+
+extension RideSession {
+    /// 앱이 꺼져도 이어서 기록할 수 있게 저장하는 진행 중 주행 상태
+    struct Snapshot: Codable {
+        var startStationID: String
+        var passIsTwoHours: Bool
+        var startedAt: Date
+        var courseID: String?
+        var initialCourseID: String?
+        var pausedAt: Date?
+        var pausedTotal: TimeInterval
+        var distanceMeters: Double
+        var trackPoints: [TrackPoint]
+        var segmentStarts: [Int]
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(
+            startStationID: startStation.id,
+            passIsTwoHours: pass == .twoHours,
+            startedAt: startedAt,
+            courseID: course?.id,
+            initialCourseID: initialCourse?.id,
+            pausedAt: pausedAt,
+            pausedTotal: pausedTotal,
+            distanceMeters: distanceMeters,
+            trackPoints: trackPoints,
+            segmentStarts: segmentStarts
+        )
+    }
+
+    /// 저장해 둔 상태로 주행을 되살린다. 정류장·코스는 목록에서 찾아 넣어 준다.
+    /// 앱이 꺼져 있던 동안은 위치가 없으므로, 다음 점부터 새 구간으로 시작하고 그 사이 거리는 더하지 않는다.
+    convenience init(restoring snapshot: Snapshot, station: Station, course: Course?, initialCourse: Course?) {
+        self.init(
+            startStation: station,
+            pass: snapshot.passIsTwoHours ? .twoHours : .oneHour,
+            course: initialCourse,
+            startedAt: snapshot.startedAt
+        )
+        self.course = course
+        pausedAt = snapshot.pausedAt
+        isPaused = snapshot.pausedAt != nil
+        pausedTotal = snapshot.pausedTotal
+        distanceMeters = snapshot.distanceMeters
+        trackPoints = snapshot.trackPoints
+        segmentStarts = snapshot.segmentStarts
+        if !trackPoints.isEmpty, segmentStarts.last != trackPoints.count {
+            segmentStarts.append(trackPoints.count)
+        }
+    }
+}
+
+enum TrackSegments {
+    /// 좌표 목록을 구간 시작 인덱스에서 나눈다. 점이 하나뿐인 구간도 그대로 둔다.
+    static func split<T>(_ items: [T], at starts: [Int]) -> [[T]] {
+        guard !items.isEmpty else { return [] }
+        var result: [[T]] = []
+        var lower = 0
+        for start in starts.sorted() where start > lower && start < items.count {
+            result.append(Array(items[lower..<start]))
+            lower = start
+        }
+        result.append(Array(items[lower...]))
+        return result
+    }
+}
+
 /// 주행 경로의 점 하나. 서버에 올릴 때는 시각을 M 값으로 담는다(LINESTRING M, 노션 5-2).
-struct TrackPoint: Hashable {
+struct TrackPoint: Hashable, Codable {
     let latitude: Double
     let longitude: Double
     let timestamp: Date

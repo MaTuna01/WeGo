@@ -1,4 +1,5 @@
 import MapKit
+import SwiftData
 import SwiftUI
 
 /// 홈 = 지도(정류장 탐색). 정류장을 고르면 시트가 정류장 시트로 바뀐다.
@@ -7,6 +8,15 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openURL) private var openURL
+
+    /// 홈 "나의 이용 기록": 최근 주행 3개
+    @Query(HomeView.recentRidesDescriptor) private var recentRides: [RideRecord]
+
+    private static var recentRidesDescriptor: FetchDescriptor<RideRecord> {
+        var descriptor = FetchDescriptor<RideRecord>(sortBy: [SortDescriptor(\.endedAt, order: .reverse)])
+        descriptor.fetchLimit = 3
+        return descriptor
+    }
 
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
     @State private var selectedStationID: Station.ID?
@@ -133,7 +143,7 @@ struct HomeView: View {
         } else {
             HomeSheet(
                 popularCourses: MockData.popularCourses,
-                myRides: MockData.myRides,
+                myRides: recentRides,
                 detent: $sheetDetent,
                 heights: homeSheetHeights
             )
@@ -222,4 +232,5 @@ struct HomeView: View {
     return HomeView()
         .environment(state)
         .environment(state.location)
+        .modelContainer(state.rideRecords.container)
 }

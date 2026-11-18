@@ -95,12 +95,6 @@ enum MockData {
         Array(courses.sorted(by: isMorePopular).prefix(3))
     }
 
-    /// 홈 시트 "나의 이용 기록". 주행 기록 저장이 생기면 실제 기록으로 바꾼다.
-    static let myRides: [Course] = [
-        Course(id: "R-01", title: "11/08 여의나루 출발", distanceMeters: 6_800, durationSeconds: 2_460),
-        Course(id: "R-02", title: "11/02 한강 산책", distanceMeters: 3_900, durationSeconds: 1_320),
-        Course(id: "R-03", title: "10/27 퇴근길", distanceMeters: 5_100, durationSeconds: 2_160),
-    ]
 
     /// 정류장 시트의 코스 탭: 그 정류장에서 출발하는 코스
     static func courses(from station: Station, filter: CourseFilter) -> [Course] {

@@ -23,6 +23,12 @@ final class AppState {
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
     @ObservationIgnored private let rideReminder = RideReminder()
+    /// 끝난 주행 기록(기기 저장)
+    @ObservationIgnored let rideRecords = RideRecordStore()
+    /// 진행 중 주행(앱이 꺼져도 이어서 기록)
+    @ObservationIgnored private let activeRideStore = ActiveRideStore()
+    /// 이보다 오래된 진행 중 주행은 복구하지 않고 그대로 끝난 기록으로 남긴다(반납을 잊고 앱을 지운 경우 등).
+    private static let restoreLimit: TimeInterval = 12 * 60 * 60
     private static let loginKey = "wego.isLoggedIn"
     private static let guestKey = "wego.isGuest"
     private static let reminderKey = "wego.rideReminderEnabled"
@@ -45,11 +51,12 @@ final class AppState {
         isLoggedIn = UserDefaults.standard.bool(forKey: Self.loginKey)
         isGuest = UserDefaults.standard.bool(forKey: Self.guestKey)
         isRideReminderEnabled = UserDefaults.standard.object(forKey: Self.reminderKey) as? Bool ?? true
-        RideActivityController.endAll()
         location.onRideUpdated = { [weak self] in
             guard let self, let ride = self.ride else { return }
             self.rideActivity.distanceDidChange(for: ride)
+            self.activeRideStore.saveIfNeeded(ride)
         }
+        restoreActiveRide()
     }
 
     func finishSplash() {
@@ -93,6 +100,7 @@ final class AppState {
         location.activeRide = session
         location.requestPermission()
         rideActivity.start(for: session)
+        activeRideStore.save(session)
         updateRideReminder()
         selectedTab = .ride
     }
@@ -101,21 +109,65 @@ final class AppState {
         guard let ride else { return }
         ride.togglePause()
         rideActivity.refresh(for: ride)
+        activeRideStore.save(ride)
     }
 
     /// 코스 안내를 그만두고 자유 주행으로 바꾼다. 대여 시간·주행 기록·10분 전 알림·Live Activity는 그대로 이어진다
     /// (Live Activity에는 코스 정보가 없어 다시 보낼 것이 없다).
     func cancelCourse() {
-        ride?.cancelCourse()
+        guard let ride else { return }
+        ride.cancelCourse()
+        activeRideStore.save(ride)
     }
 
-    /// TODO: 라이딩 요약 화면(디자인 대기) → 서버에 기록 저장
+    /// 앱이 백그라운드로 갈 때. 그대로 종료될 수 있으므로 진행 중 주행을 바로 저장한다.
+    func persistActiveRide() {
+        guard let ride else { return }
+        activeRideStore.save(ride)
+    }
+
+    /// 반납 완료: 주행 기록을 기기에 저장하고 주행을 끝낸다.
+    /// TODO: 라이딩 요약 화면(디자인 대기), 서버에 기록 업로드
     func endRide() {
+        if let ride {
+            rideRecords.save(ride)
+        }
+        activeRideStore.clear()
         rideActivity.end()
         rideReminder.cancel()
         ride = nil
         location.activeRide = nil
         selectedTab = .home
+    }
+
+    /// 앱을 다시 켰을 때 진행 중이던 주행을 되살린다. 주행 탭으로 가서 이어서 기록하고 Live Activity도 이어 쓴다.
+    private func restoreActiveRide() {
+        guard let snapshot = activeRideStore.load(),
+              let station = MockData.station(id: snapshot.startStationID)
+        else {
+            activeRideStore.clear()
+            RideActivityController.endAll()
+            return
+        }
+        let course = MockData.courses.first { $0.id == snapshot.courseID }
+        let initialCourse = MockData.courses.first { $0.id == snapshot.initialCourseID }
+        let session = RideSession(restoring: snapshot, station: station, course: course, initialCourse: initialCourse)
+
+        if Date.now.timeIntervalSince(session.startedAt) > Self.restoreLimit {
+            // 너무 오래된 주행은 마지막 위치 시각에 끝난 것으로 기록만 남긴다.
+            rideRecords.save(session, endedAt: session.trackPoints.last?.timestamp ?? session.startedAt)
+            activeRideStore.clear()
+            RideActivityController.endAll()
+            return
+        }
+
+        ride = session
+        location.activeRide = session
+        location.requestPermission()
+        rideActivity.resume(for: session)
+        selectedTab = .ride
+        // 예약해 둔 10분 전 알림은 앱이 꺼져도 남아 있지만, 토글 상태에 맞춰 다시 맞춘다.
+        updateRideReminder()
     }
 
     private func updateRideReminder() {

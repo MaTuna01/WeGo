@@ -28,6 +28,14 @@ enum WeGoFormat {
         "약 \(max(1, Int((Double(seconds) / 60).rounded())))분"
     }
 
+    /// 실제로 걸린 시간(주행 기록). 측정값이라 "약"을 붙이지 않는다. 1분 미만은 "1분 미만"
+    static func minutes(_ seconds: Double) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes < 1 { return "1분 미만" }
+        if minutes < 60 { return "\(minutes)분" }
+        return minutes % 60 == 0 ? "\(minutes / 60)시간" : "\(minutes / 60)시간 \(minutes % 60)분"
+    }
+
     static func won(_ amount: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
