@@ -3,7 +3,8 @@ import SwiftUI
 /// 정류장 선택 전 홈 시트 (Figma 299:58): 많이 찾는 코스 / 나의 이용 기록. 끌어서 높이를 바꾼다.
 struct HomeSheet: View {
     let popularCourses: [Course]
-    let myRides: [Course]
+    /// 최근 주행 기록(최대 3개, 최신순)
+    let myRides: [RideRecord]
     @Binding var detent: SheetDetent
     let heights: (CGFloat) -> SheetHeights
 
@@ -22,7 +23,7 @@ struct HomeSheet: View {
                         emptyText("첫 라이딩을 마치면 기록이 여기에 쌓여요.")
                             .padding(.top, 7)
                     } else {
-                        cardRow(myRides)
+                        rideRow(myRides)
                             .padding(.top, 7)
                     }
                 }
@@ -42,6 +43,22 @@ struct HomeSheet: View {
         HStack(spacing: 20) {
             ForEach(courses.prefix(3)) { course in
                 CourseCard(course: course)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 116)
+            }
+        }
+    }
+
+    private func rideRow(_ rides: [RideRecord]) -> some View {
+        HStack(spacing: 20) {
+            ForEach(rides.prefix(3)) { ride in
+                CourseCard(title: ride.cardTitle, subtitle: ride.cardSubtitle)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 116)
+            }
+            // 3개보다 적으면 빈 자리를 둬서 카드 폭을 그대로 유지한다.
+            ForEach(0..<max(0, 3 - rides.count), id: \.self) { _ in
+                Color.clear
                     .frame(maxWidth: .infinity)
                     .frame(height: 116)
             }

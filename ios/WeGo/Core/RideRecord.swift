@@ -65,6 +65,21 @@ final class RideRecord {
 }
 
 extension RideRecord {
+    /// 홈 "나의 이용 기록" 카드 이름: "11/18 원효대교 남단 강변길"(코스를 끝까지 안내받음) / "11/18 여의나루역 1번출구 앞 출발"
+    var cardTitle: String {
+        let parts = Calendar.current.dateComponents([.month, .day], from: startedAt)
+        let date = String(format: "%02d/%02d", parts.month ?? 0, parts.day ?? 0)
+        if let courseTitle, !courseCanceled {
+            return "\(date) \(courseTitle)"
+        }
+        return "\(date) \(startStationName) 출발"
+    }
+
+    /// 카드 아래 줄: 달린 거리 · 주행 시간(실측)
+    var cardSubtitle: String {
+        "\(WeGoFormat.distance(Int(distanceMeters.rounded()))) · \(WeGoFormat.minutes(ridingSeconds))"
+    }
+
     /// 끝난 주행 세션으로 기록을 만든다.
     convenience init(session: RideSession, endedAt: Date) {
         self.init(
@@ -113,7 +128,7 @@ enum TrackCodec {
 }
 
 /// 주행 기록 저장소. 앱 전체에서 하나의 ModelContainer를 쓴다.
-/// AppState처럼 메인 스레드(화면 동작)에서만 부른다.
+/// AppState처럼 메인 스레드(화면 동작)에서만 부른다. 화면의 `@Query`와 같은 메인 컨텍스트에 써서 저장하면 바로 반영되게 한다.
 final class RideRecordStore {
     let container: ModelContainer
     private let context: ModelContext
@@ -131,7 +146,9 @@ final class RideRecordStore {
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }
-        context = ModelContext(container)
+        // AppState는 앱 시작 시 메인 스레드에서 만들어진다.
+        let container = container
+        context = MainActor.assumeIsolated { container.mainContext }
     }
 
     /// 반납 완료한 주행을 저장한다.
