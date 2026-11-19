@@ -11,6 +11,10 @@ enum BikeOperator: String, CaseIterable, Hashable {
         case .tashu: "타슈"
         }
     }
+
+    /// 1.0에서 지원하는 운영사. 서버가 따릉이만 내려주므로 타슈 필터를 보여주면 빈 지도가 된다.
+    /// 운영사가 하나뿐이면 홈의 운영사 필터 칩을 숨긴다(MapTopBar).
+    static let available: [BikeOperator] = [.ttareungyi]
 }
 
 /// 공유자전거 정류장. 서버의 공통 Station 모델(운영사별 어댑터로 변환된 값)에 대응한다.
