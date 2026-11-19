@@ -10,6 +10,17 @@ enum Fixtures {
     static let yeouido = station("ST-YD-05", "여의도역 5번출구", 37.52150, 126.92430)
     static let stations = [yeouinaru, wonhyo, assembly, yeouido]
 
+    /// 테스트용 코스(여의나루 -> 원효대교 남단)
+    static var course: Course {
+        var course = Course(id: "TEST-YN-HG", title: wonhyo.name, distanceMeters: 705, durationSeconds: 300)
+        course.startStationID = yeouinaru.id
+        course.endStationID = wonhyo.id
+        course.path = line(yeouinaru.coordinate, wonhyo.coordinate, steps: 5).map {
+            CoursePoint(latitude: $0.latitude, longitude: $0.longitude)
+        }
+        return course
+    }
+
     /// 정류장에서 먼 곳(집 앞 역할). 여의나루 → 집 직선이 다른 정류장을 지나지 않는다.
     static let homeNorth = coordinate(37.53300, 126.92300)
     /// 원효대교 남단에서 남동쪽. 원효대교 남단 → 집 직선이 다른 정류장을 지나지 않는다.

@@ -27,7 +27,8 @@ struct HomeView: View {
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
     @State private var selectedStationID: Station.ID?
     @State private var operatorFilter: BikeOperator?
-    @State private var courseFilter: CourseFilter = .popular
+    /// 1.0은 인기/저장 코스가 없어서(서버 공유 경로 전) 내 기록이 나오는 최신 탭을 기본으로 연다.
+    @State private var courseFilter: CourseFilter = .recent
     @State private var selectedCourseID: Course.ID?
     @State private var detailCourseID: Course.ID?
     @State private var awaitingReturnFrom: Station?
@@ -47,13 +48,17 @@ struct HomeView: View {
         MockData.stations.first { $0.id == selectedStationID }
     }
 
-    /// 정류장 시트 코스 목록. 서버 공유 경로가 생기기 전까지 목업 코스를 쓰고,
-    /// 최신 탭에는 이 정류장에서 출발한 내 기록을 날짜순으로 섞는다(인기 지표가 없어 인기 탭에는 넣지 않음).
+    /// 정류장 시트 코스 목록. 1.0은 서버 공유 경로가 없어서, 최신 탭에 이 정류장에서 출발한 내 기록만 보여준다.
     private var stationCourses: [Course] {
         guard let selectedStation else { return [] }
-        let courses = MockData.courses(from: selectedStation, filter: courseFilter)
-        guard courseFilter == .recent else { return courses }
-        return (courses + myRideCourses).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+        guard selectedStation != nil else { return [] }
+        switch courseFilter {
+        case .recent:
+            return myRideCourses
+        case .popular, .saved:
+            // 인기(다른 사람의 공유 경로)와 저장은 서버 연동(1.1) 후에 채운다.
+            return []
+        }
     }
 
     private var selectedCourse: Course? {
@@ -156,7 +161,6 @@ struct HomeView: View {
             .transition(.move(edge: .bottom))
         } else {
             HomeSheet(
-                popularCourses: MockData.popularCourses,
                 myRides: recentRides,
                 detent: $sheetDetent,
                 heights: homeSheetHeights

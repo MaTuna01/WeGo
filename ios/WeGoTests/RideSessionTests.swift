@@ -109,7 +109,7 @@ struct RideSessionTests {
     }
 
     @Test func 복구해도_일시정지_상태와_코스_취소_여부가_남는다() {
-        let course = MockData.courses[0]
+        let course = Fixtures.course
         let session = RideSession(startStation: station, pass: .twoHours, course: course)
         session.cancelCourse()
         session.togglePause()

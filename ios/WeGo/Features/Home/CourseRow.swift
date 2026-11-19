@@ -110,7 +110,7 @@ struct CourseRow: View {
 }
 
 #Preview {
-    let course = MockData.courses[0]
+    let course = MockData.previewCourse
     VStack(spacing: 12) {
         CourseRow(course: course, startName: "여의나루역 1번출구 앞", endName: "여의도 한강공원 원효대교 남단", isSelected: true)
         CourseRow(course: course, startName: "서울숲", endName: "서울 한강공원")
