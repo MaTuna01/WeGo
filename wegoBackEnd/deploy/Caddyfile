@@ -63,3 +63,10 @@ wegoride.site {
 	}
 	import access_log
 }
+
+# www 주소로 들어오면 wegoride.site로 보냄(DNS에 www A 레코드가 있음)
+www.wegoride.site {
+	redir https://wegoride.site{uri} permanent
+	import common_headers
+	import access_log
+}
