@@ -61,6 +61,7 @@ struct HomeSheet: View {
 /// 정류장 선택 후 시트 (Figma 299:121): 인기/최신/저장 코스 탭, 세로 코스 카드 목록, 코스 선택하기 / 대여하러 가기
 /// 기획상 필요한 "잔여 대수(참고)"는 시안에 자리가 없어 아직 넣지 않았다 — 디자이너와 위치 결정 필요.
 struct StationSheet: View {
+    @Environment(AppState.self) private var appState
     let station: Station
     @Binding var filter: CourseFilter
     let courses: [Course]
@@ -134,11 +135,11 @@ struct StationSheet: View {
     }
 
     private func startName(of course: Course) -> String {
-        MockData.station(id: course.startStationID)?.name ?? station.name
+        appState.stationRepository.station(id: course.startStationID)?.name ?? station.name
     }
 
     private func endName(of course: Course) -> String {
-        MockData.station(id: course.endStationID)?.name ?? "도착 정류장"
+        appState.stationRepository.station(id: course.endStationID)?.name ?? "도착 정류장"
     }
 
     @ViewBuilder

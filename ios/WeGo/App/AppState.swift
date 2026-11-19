@@ -23,6 +23,8 @@ final class AppState {
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
     @ObservationIgnored private let rideReminder = RideReminder()
+    /// 정류장 목록(서버 -> 기기 저장본 -> 앱 내장 목록). 주행 복구가 쓰므로 restoreActiveRide보다 먼저 만든다.
+    @ObservationIgnored let stationRepository = StationRepository()
     /// 끝난 주행 기록(기기 저장)
     @ObservationIgnored let rideRecords = RideRecordStore()
     /// 진행 중 주행(앱이 꺼져도 이어서 기록)
@@ -43,6 +45,10 @@ final class AppState {
     /// 알림 권한이 꺼져 있어 예약하지 못했을 때 true(주행 화면이 안내를 띄운다)
     var isReminderPermissionDenied = false
 
+    private var versionGate = MinimumVersionGate()
+    /// 최소 지원 버전보다 낮아 앱 사용을 막아야 하면 true(RootView가 업데이트 안내로 덮는다)
+    var isUpdateRequired: Bool { versionGate.isUpdateRequired }
+
     private(set) var isLoggedIn: Bool
     /// "비로그인으로 시작하기"로 들어온 상태. 지도·코스 보기·주행은 되고, 기록 저장·공유처럼 계정이 필요한 기능은 로그인을 요구한다.
     private(set) var isGuest: Bool
@@ -57,6 +63,13 @@ final class AppState {
             self.activeRideStore.saveIfNeeded(ride)
         }
         restoreActiveRide()
+    }
+
+    /// 앱 시작 때와 앱으로 돌아올 때 부른다. 확인 주기와 막힘 유지는 MinimumVersionGate가 정한다.
+    @MainActor
+    func checkMinimumVersion(using client: APIClient? = APIClient.shared) async {
+        guard versionGate.beginCheck(at: .now) else { return }
+        versionGate.finishCheck(updateRequired: await MinimumVersionCheck.isUpdateRequired(using: client))
     }
 
     func finishSplash() {
@@ -130,7 +143,7 @@ final class AppState {
     /// TODO: 라이딩 요약 화면(디자인 대기), 서버에 기록 업로드
     func endRide() {
         if let ride {
-            rideRecords.save(ride)
+            rideRecords.save(ride, stations: stationRepository.stations)
         }
         activeRideStore.clear()
         rideActivity.end()
@@ -143,7 +156,7 @@ final class AppState {
     /// 앱을 다시 켰을 때 진행 중이던 주행을 되살린다. 주행 탭으로 가서 이어서 기록하고 Live Activity도 이어 쓴다.
     private func restoreActiveRide() {
         guard let snapshot = activeRideStore.load(),
-              let station = MockData.station(id: snapshot.startStationID)
+              let station = stationRepository.station(id: snapshot.startStationID)
         else {
             activeRideStore.clear()
             RideActivityController.endAll()
@@ -160,7 +173,7 @@ final class AppState {
 
         if Date.now.timeIntervalSince(session.startedAt) > Self.restoreLimit {
             // 너무 오래된 주행은 마지막 위치 시각에 끝난 것으로 기록만 남긴다.
-            rideRecords.save(session, endedAt: session.trackPoints.last?.timestamp ?? session.startedAt)
+            rideRecords.save(session, endedAt: session.trackPoints.last?.timestamp ?? session.startedAt, stations: stationRepository.stations)
             activeRideStore.clear()
             RideActivityController.endAll()
             return

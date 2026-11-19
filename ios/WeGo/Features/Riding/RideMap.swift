@@ -4,6 +4,7 @@ import SwiftUI
 /// 코스 안내 주행 지도 (Figma 299:343).
 /// 코스 경로(연한 주황) 위에 지나온 경로(진한 주황)를 겹쳐 그리고, 출발·도착 정류장 핀과 오리 모양 내 위치를 보여준다.
 struct RideMapView: View {
+    @Environment(AppState.self) private var appState
     let session: RideSession
     /// 진행 방향(도, 북쪽 0·시계 방향). 모르면 nil
     let heading: Double?
@@ -30,7 +31,7 @@ struct RideMapView: View {
             }
             .annotationTitles(.hidden)
 
-            if let end = MockData.station(id: session.course?.endStationID) {
+            if let end = appState.stationRepository.station(id: session.course?.endStationID) {
                 Annotation(end.name, coordinate: end.coordinate, anchor: StationPin.anchor(isSelected: false)) {
                     StationPin(isSelected: false)
                 }
