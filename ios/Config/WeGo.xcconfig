@@ -6,6 +6,10 @@
 // 출시 빌드는 HTTPS 도메인만 쓴다(IP 금지, 서버를 옮기면 DNS만 바꾼다).
 WEGO_API_BASE_URL =
 
+// App Store Connect의 앱 Apple ID(숫자). 업데이트 안내가 이 앱의 App Store 페이지를 연다.
+// 비어 있으면 App Store에서 "위고"를 검색한다. 공개 값이라 커밋해도 된다.
+WEGO_APP_STORE_ID =
+
 // 내 컴퓨터에서 띄운 서버에 붙어 보려면 같은 폴더에 Local.xcconfig를 만들어 덮어쓴다(gitignore).
 //   예) WEGO_API_BASE_URL = http:/$()/localhost:8080
 #include? "Local.xcconfig"

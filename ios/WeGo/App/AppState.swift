@@ -43,6 +43,10 @@ final class AppState {
     /// 알림 권한이 꺼져 있어 예약하지 못했을 때 true(주행 화면이 안내를 띄운다)
     var isReminderPermissionDenied = false
 
+    private var versionGate = MinimumVersionGate()
+    /// 최소 지원 버전보다 낮아 앱 사용을 막아야 하면 true(RootView가 업데이트 안내로 덮는다)
+    var isUpdateRequired: Bool { versionGate.isUpdateRequired }
+
     private(set) var isLoggedIn: Bool
     /// "비로그인으로 시작하기"로 들어온 상태. 지도·코스 보기·주행은 되고, 기록 저장·공유처럼 계정이 필요한 기능은 로그인을 요구한다.
     private(set) var isGuest: Bool
@@ -57,6 +61,13 @@ final class AppState {
             self.activeRideStore.saveIfNeeded(ride)
         }
         restoreActiveRide()
+    }
+
+    /// 앱 시작 때와 앱으로 돌아올 때 부른다. 확인 주기와 막힘 유지는 MinimumVersionGate가 정한다.
+    @MainActor
+    func checkMinimumVersion(using client: APIClient? = APIClient.shared) async {
+        guard versionGate.beginCheck(at: .now) else { return }
+        versionGate.finishCheck(updateRequired: await MinimumVersionCheck.isUpdateRequired(using: client))
     }
 
     func finishSplash() {

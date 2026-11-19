@@ -6,6 +6,9 @@
 	<!-- 서버 주소. Config/WeGo.xcconfig의 WEGO_API_BASE_URL에서 온다(비면 서버 없이 동작) -->
 	<key>WeGoAPIBaseURL</key>
 	<string>$(WEGO_API_BASE_URL)</string>
+	<!-- 업데이트 안내가 여는 App Store 앱 ID. Config/WeGo.xcconfig의 WEGO_APP_STORE_ID에서 온다 -->
+	<key>WeGoAppStoreID</key>
+	<string>$(WEGO_APP_STORE_ID)</string>
 	<!-- 개발 중 내 컴퓨터의 서버(localhost)에만 HTTP를 허용한다. 외부 주소는 HTTPS만 -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
