@@ -1,3 +1,36 @@
 spring:
   application:
     name: wegoBackEnd
+  autoconfigure:
+    # 1.0 최소 서버는 DB를 쓰지 않음(정류장 목록은 메모리). 의존성은 1.1(로그인, 기록 업로드) 대비로 남김.
+    # 로그인이 없으므로 기본 사용자(임시 비밀번호)도 만들지 않음
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  mvc:
+    # 오류 응답을 RFC 9457 ProblemDetail로 전송.
+    problemdetails:
+      enabled: true
+
+server:
+  # 포트는 환경 변수 SERVER_PORT로 지정, 없으면 8080
+  port: ${SERVER_PORT:8080}
+  # Caddy가 앞에서 HTTPS를 받아 중계함. X-Forwarded-* 헤더로 원래 요청 정보 사용
+  forward-headers-strategy: native
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  pattern:
+    # 모든 로그 줄에 앱 버전(X-App-Version)을 첨부
+    level: "%5p [app %X{appVersion:-}]"
