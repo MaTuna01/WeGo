@@ -1,6 +1,6 @@
 # WeGo 최소 서버 배포(VM 한 대). 클라우드 전용 서비스 없이 Docker만 있으면 됨(가비아 -> AWS 이전 시 그대로 사용)
 # 실행: deploy 폴더에서 docker compose up -d --build
-# 사전 준비: wegoBackEnd/.env 작성, api.wegoride.site A 레코드를 이 VM 공인 IP로, 방화벽에서 80/443만 열기
+# 사전 준비: wegoBackEnd/.env 작성, api.wegoride.site와 wegoride.site A 레코드를 이 VM 공인 IP로, 방화벽에서 80/443만 열기
 
 services:
   api:
@@ -31,6 +31,8 @@ services:
       - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # wegoride.site 정적 페이지(처리방침, 지원). 파일만 바꾸면 재시작 없이 반영됨
+      - ./site:/srv/site:ro
       # 발급받은 인증서 보관(지우면 다시 발급받음, 발급 횟수 제한 주의)
       - caddy_data:/data
       - caddy_config:/config
