@@ -1,7 +1,7 @@
 import MapKit
 
-/// 서버 API가 붙기 전까지 쓰는 목업 데이터. 잔여 대수·고도·후기는 실제 값이 아니다.
-/// 좌표는 실제 정류장 위치가 아니지만, 지도에서 강 위에 찍히지 않도록 육지(공원·도로) 위로 맞춰 두었다.
+/// 서버 API가 붙기 전까지 쓰는 목업 정류장. 잔여 대수는 실제 값이 아니다.
+/// 좌표는 실제 정류장 위치가 아니지만, 지도에서 강 위에 찍히지 않도록 육지(공원, 도로) 위로 맞춰 두었다.
 enum MockData {
     static let defaultRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.5270, longitude: 126.9300),
@@ -29,137 +29,19 @@ enum MockData {
                 availableBikes: 2, updatedAt: Date().addingTimeInterval(-180)),
     ]
 
-    /// 정류장에서 정류장까지의 공유·큐레이션 코스
-    static let courses: [Course] = [
-        makeCourse(
-            id: "C-YN-HG", title: "원효대교 남단 강변길", from: "ST-YN-01", to: "ST-YD-HG",
-            path: [(37.52710, 126.93290, 13), (37.52620, 126.93400, 12), (37.52540, 126.93520, 12),
-                   (37.52460, 126.93660, 14), (37.52390, 126.93790, 13), (37.52320, 126.93920, 15)],
-            waypoints: [CourseWaypoint(name: "한강공원 산책로", pathIndex: 2)],
-            bikeLanes: [0...5], likes: 42, rides: 128, saved: true, daysAgo: 20,
-            reviews: [
-                review("R-1", 5, "경치가 예뻐서 자전거 탈 맛 납니다", daysAgo: 2),
-                review("R-2", 4, "평지라 아이랑 타기 좋아요", daysAgo: 6),
-                review("R-3", 5, "해 질 녘에 꼭 타 보세요", daysAgo: 12),
-            ]
-        ),
-        makeCourse(
-            id: "C-YN-GH", title: "국회의사당 강변길", from: "ST-YN-01", to: "ST-GH-01",
-            path: [(37.52710, 126.93290, 13), (37.52800, 126.93000, 12), (37.52900, 126.92700, 11),
-                   (37.52960, 126.92400, 12), (37.52930, 126.92050, 15), (37.52840, 126.91760, 19)],
-            waypoints: [CourseWaypoint(name: "여의도 마리나", pathIndex: 2)],
-            bikeLanes: [0...3], likes: 18, rides: 55, daysAgo: 3,
-            reviews: [
-                review("R-4", 4, "마지막 오르막만 조금 힘들어요", daysAgo: 1),
-                review("R-5", 5, "강바람 맞으며 달리기 최고", daysAgo: 4),
-            ]
-        ),
-        makeCourse(
-            id: "C-YN-SG", title: "샛강 생태공원 숲길", from: "ST-YN-01", to: "ST-YD-05",
-            path: [(37.52710, 126.93290, 13), (37.52450, 126.93450, 11), (37.52150, 126.93300, 9),
-                   (37.51900, 126.93000, 8), (37.51850, 126.92650, 9), (37.51950, 126.92480, 12),
-                   (37.52150, 126.92430, 14)],
-            waypoints: [CourseWaypoint(name: "샛강 생태공원", pathIndex: 3)],
-            bikeLanes: [1...4], likes: 30, rides: 70, daysAgo: 10,
-            reviews: [review("R-6", 5, "숲길이라 한여름에도 시원해요", daysAgo: 3)]
-        ),
-        makeCourse(
-            id: "C-YN-YD5", title: "여의도공원 가로지르기", from: "ST-YN-01", to: "ST-YD-05",
-            path: [(37.52710, 126.93290, 13), (37.52550, 126.93100, 14), (37.52400, 126.92880, 16),
-                   (37.52280, 126.92650, 15), (37.52150, 126.92430, 14)],
-            bikeLanes: [1...3], likes: 9, rides: 21, saved: true, daysAgo: 1
-        ),
-        makeCourse(
-            id: "C-HG-YN", title: "여의나루역 강변길", from: "ST-YD-HG", to: "ST-YN-01",
-            path: [(37.52320, 126.93920, 15), (37.52390, 126.93790, 13), (37.52460, 126.93660, 14),
-                   (37.52540, 126.93520, 12), (37.52620, 126.93400, 12), (37.52710, 126.93290, 13)],
-            waypoints: [CourseWaypoint(name: "한강공원 산책로", pathIndex: 3)],
-            bikeLanes: [0...5], likes: 12, rides: 33, daysAgo: 5
-        ),
-        makeCourse(
-            id: "C-GH-YD5", title: "국회 둘레 평지 코스", from: "ST-GH-01", to: "ST-YD-05",
-            path: [(37.52840, 126.91760, 19), (37.52620, 126.91820, 17), (37.52400, 126.91950, 15),
-                   (37.52220, 126.92150, 14), (37.52150, 126.92430, 14)],
-            likes: 7, rides: 15, saved: true, daysAgo: 7
-        ),
-        makeCourse(
-            id: "C-EXPO-DDB", title: "갑천 자전거길", from: "TS-EXPO", to: "TS-DDB",
-            path: [(36.37630, 127.38720, 42), (36.37450, 127.38950, 41), (36.37250, 127.39150, 41),
-                   (36.37000, 127.39400, 43)],
-            bikeLanes: [0...3], likes: 5, rides: 11, daysAgo: 2
-        ),
-    ]
-
-    /// 홈 시트 "많이 찾는 코스"
-    static var popularCourses: [Course] {
-        Array(courses.sorted(by: isMorePopular).prefix(3))
-    }
-
-
-    /// 정류장 시트의 코스 탭: 그 정류장에서 출발하는 코스
-    static func courses(from station: Station, filter: CourseFilter) -> [Course] {
-        let departing = courses.filter { $0.startStationID == station.id }
-        switch filter {
-        case .popular:
-            return departing.sorted(by: isMorePopular)
-        case .recent:
-            return departing.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-        case .saved:
-            return departing.filter(\.isSaved)
-        }
-    }
-
     static func station(id: Station.ID?) -> Station? {
         stations.first { $0.id == id }
     }
 
-    // MARK: - 만들기 도우미
-
-    private static func isMorePopular(_ lhs: Course, _ rhs: Course) -> Bool {
-        lhs.likeCount + lhs.rideCount > rhs.likeCount + rhs.rideCount
-    }
-
-    /// 경로 점으로 거리를 계산하고, 예상 시간은 따릉이 평균 속도(14km/h)에 도심 보정 ×1.2를 적용한다.
-    private static func makeCourse(
-        id: String,
-        title: String,
-        from: Station.ID,
-        to: Station.ID,
-        path: [(Double, Double, Double)],
-        waypoints: [CourseWaypoint] = [],
-        bikeLanes: [ClosedRange<Int>] = [],
-        likes: Int,
-        rides: Int,
-        saved: Bool = false,
-        daysAgo: Double,
-        reviews: [CourseReview] = []
-    ) -> Course {
-        let points = path.map { CoursePoint(latitude: $0.0, longitude: $0.1, elevationMeters: $0.2) }
-        let meters = zip(points, points.dropFirst()).reduce(0.0) { total, pair in
-            let a = CLLocation(latitude: pair.0.latitude, longitude: pair.0.longitude)
-            let b = CLLocation(latitude: pair.1.latitude, longitude: pair.1.longitude)
-            return total + a.distance(from: b)
-        }
-        let averageSpeed = 14_000.0 / 3600 // m/s
-        return Course(
-            id: id,
-            title: title,
-            distanceMeters: Int(meters.rounded()),
-            durationSeconds: Int((meters / averageSpeed * 1.2).rounded()),
-            startStationID: from,
-            endStationID: to,
-            path: points,
-            waypoints: waypoints,
-            bikeLaneSegments: bikeLanes,
-            reviews: reviews,
-            likeCount: likes,
-            rideCount: rides,
-            isSaved: saved,
-            createdAt: Date().addingTimeInterval(-daysAgo * 86_400)
-        )
-    }
-
-    private static func review(_ id: String, _ rating: Int, _ text: String, daysAgo: Double) -> CourseReview {
-        CourseReview(id: id, rating: rating, text: text, createdAt: Date().addingTimeInterval(-daysAgo * 86_400))
-    }
+    /// Xcode 미리보기 전용 예시 코스(여의나루역 -> 원효대교 남단). 화면 데이터로는 쓰지 않는다.
+    /// 1.0은 목업 코스, 후기, 인기 수치를 보여주지 않는다(심사 가이드라인 2.1, 2.3). 코스 목록에는 내 기록만 나온다.
+    static let previewCourse: Course = {
+        let path = [(37.52710, 126.93290, 13.0), (37.52620, 126.93400, 12.0), (37.52540, 126.93520, 12.0),
+                    (37.52460, 126.93660, 14.0), (37.52390, 126.93790, 13.0), (37.52320, 126.93920, 15.0)]
+        var course = Course(id: "PREVIEW", title: "여의도 한강공원 원효대교 남단", distanceMeters: 707, durationSeconds: 218)
+        course.startStationID = "ST-YN-01"
+        course.endStationID = "ST-YD-HG"
+        course.path = path.map { CoursePoint(latitude: $0.0, longitude: $0.1, elevationMeters: $0.2) }
+        return course
+    }()
 }

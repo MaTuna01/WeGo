@@ -149,10 +149,10 @@ final class AppState {
             RideActivityController.endAll()
             return
         }
-        // 코스는 목업 코스에서 찾고, 없으면 내 기록에서 만든 코스(ride-...)에서 찾는다.
+        // 1.0의 코스는 내 기록에서 만든 코스(ride-...)뿐이다.
         func findCourse(_ id: String?) -> Course? {
             guard let id else { return nil }
-            return MockData.courses.first { $0.id == id } ?? rideRecords.course(id: id)
+            return rideRecords.course(id: id)
         }
         let course = findCourse(snapshot.courseID)
         let initialCourse = findCourse(snapshot.initialCourseID)

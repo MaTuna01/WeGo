@@ -49,8 +49,11 @@ struct CourseDetailView: View {
             .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .padding(.top, 2)
 
-            sectionTitle("사용자 후기")
-                .padding(.top, 11)
+            // 후기가 없으면 제목까지 숨긴다(1.0은 후기 기능이 없음).
+            if !course.reviews.isEmpty {
+                sectionTitle("사용자 후기")
+                    .padding(.top, 11)
+            }
         }
     }
 
@@ -82,15 +85,7 @@ struct CourseDetailView: View {
     /// 가로로 넘기는 후기 카드(253×104). 카드가 화면 오른쪽 밖까지 이어지게 좌우 여백은 안쪽에만 둔다.
     @ViewBuilder
     private var reviews: some View {
-        if course.reviews.isEmpty {
-            Text("아직 후기가 없어요. 이 코스를 타고 첫 후기를 남겨 주세요.")
-                .wegoFont(.regular, 13)
-                .foregroundStyle(WeGoColor.gray500)
-                .frame(maxWidth: .infinity)
-                .frame(height: 104)
-                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 20)
-        } else {
+        if !course.reviews.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 9) {
                     ForEach(course.reviews) { review in
@@ -182,7 +177,7 @@ private struct ReviewCard: View {
 
 #Preview {
     CourseDetailView(
-        course: MockData.courses[0],
+        course: MockData.previewCourse,
         startName: "여의나루역 1번출구 앞",
         endName: "여의도 한강공원 원효대교 남단",
         onBack: {}

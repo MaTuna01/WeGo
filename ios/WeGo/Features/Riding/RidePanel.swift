@@ -148,7 +148,7 @@ struct RideCheerBanner: View {
             .padding(.horizontal, 21)
         Spacer()
         RideStatsPanel(
-            stats: .following(MockData.courses[0], remainingSeconds: 180),
+            stats: .following(MockData.previewCourse, remainingSeconds: 180),
             isPaused: false,
             onCancelCourse: {},
             onReturn: {}

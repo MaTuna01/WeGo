@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// 로그인/회원가입 (Figma 299:38): 상단 오리 일러스트, 환영 문구, 구글 / Apple / 비로그인으로 시작하기.
+/// 시작 화면 (Figma 299:38): 상단 오리 일러스트, 환영 문구, 시작하기.
+/// 1.0은 로그인 없이 쓰므로(노션 "앱 개발" 1.0 출시 계획) 구글/Apple 버튼은 빼고 시작하기 하나만 둔다.
+/// 소셜 로그인은 서버 연동(1.1) 때 다시 넣는다. 그때 쓸 SocialLoginButton과 AppState.signIn은 남겨 둔다.
 ///
 /// 위쪽 일러스트·환영 문구는 Figma 프레임(402pt 폭) 좌표를 화면 폭에 맞춰 늘리고,
 /// 버튼·약관 문구는 화면 아래에 붙여서 기기 높이가 달라도 아래 여백이 디자인과 같게 한다.
@@ -43,22 +45,15 @@ struct LoginView: View {
     }
 
     private var buttons: some View {
-        VStack(spacing: 9) {
-            SocialLoginButton(icon: "iconGoogle", title: "구글로 시작하기", style: .light) {
-                appState.signIn(with: .google)
-            }
-            SocialLoginButton(icon: "iconApple", title: "Apple로 시작하기", style: .dark) {
-                appState.signIn(with: .apple)
-            }
-            SocialLoginButton(icon: nil, title: "비로그인으로 시작하기", style: .light) {
-                appState.continueAsGuest()
-            }
+        SocialLoginButton(icon: nil, title: "시작하기", style: .dark) {
+            appState.continueAsGuest()
         }
         .padding(.horizontal, 14)
     }
 
+    /// 1.0의 실제 동작만 안내한다(서버로 보내는 정보가 없고, 약관/위탁 제공도 없음).
     private var terms: some View {
-        Text("시작과 동시에 위고의 서비스 이용약관, 개인정보 수집 및 이용, 개인정보 위탁 제공에 동의하게 됩니다.")
+        Text("위치 정보는 주행 경로 기록에만 쓰고, 기록은 이 기기에만 저장돼요.")
             .wegoFont(.regular, 14, tracking: -0.7, lineHeight: 22)
             .foregroundStyle(WeGoColor.textCaption)
             .frame(maxWidth: .infinity, alignment: .leading)

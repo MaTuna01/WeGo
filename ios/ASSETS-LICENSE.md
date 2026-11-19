@@ -22,6 +22,7 @@ Copyright © 2026 WeGo 팀. All rights reserved.
 | `splashPhoto` | 스플래시 사진 |
 | `splashLogoKo`, `splashLogoWego` | 위고 손글씨 로고, WEGO 로고 |
 | `splashLine1`~`splashLine4`, `splashAccent1`~`splashAccent3` | 스플래시 장식 선 |
+| AppIcon (AppIcon.appiconset 폴더) | 앱 아이콘(흰 배경 오리) |
 
 ## 대상이 아닌 파일
 

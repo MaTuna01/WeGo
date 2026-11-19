@@ -114,7 +114,7 @@ struct ElevationChart: View {
 }
 
 #Preview {
-    ElevationChart(course: MockData.courses[1])
+    ElevationChart(course: MockData.previewCourse)
         .padding(.vertical, 24)
         .frame(width: 362)
         .background(.white)

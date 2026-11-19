@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// 정류장 선택 전 홈 시트 (Figma 299:58): 많이 찾는 코스 / 나의 이용 기록. 끌어서 높이를 바꾼다.
+/// 정류장 선택 전 홈 시트 (Figma 299:58): 나의 이용 기록. 끌어서 높이를 바꾼다.
+/// 디자인의 "많이 찾는 코스"는 다른 사람의 공유 경로가 필요해서 서버 연동(1.1) 때 다시 넣는다.
 struct HomeSheet: View {
-    let popularCourses: [Course]
     /// 최근 주행 기록(최대 3개, 최신순)
     let myRides: [RideRecord]
     @Binding var detent: SheetDetent
@@ -12,11 +12,6 @@ struct HomeSheet: View {
         DraggableBottomSheet(detent: $detent, heights: heights) {
             SheetScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    sectionTitle("많이 찾는 코스")
-                        .padding(.top, 15)
-                    cardRow(popularCourses)
-                        .padding(.top, 7)
-
                     sectionTitle("나의 이용 기록")
                         .padding(.top, 15)
                     if myRides.isEmpty {
@@ -37,16 +32,6 @@ struct HomeSheet: View {
         Text(text)
             .wegoFont(.regular, 14, tracking: -0.7)
             .foregroundStyle(.black)
-    }
-
-    private func cardRow(_ courses: [Course]) -> some View {
-        HStack(spacing: 20) {
-            ForEach(courses.prefix(3)) { course in
-                CourseCard(course: course)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 116)
-            }
-        }
     }
 
     private func rideRow(_ rides: [RideRecord]) -> some View {
@@ -159,7 +144,7 @@ struct StationSheet: View {
     @ViewBuilder
     private var courseList: some View {
         if courses.isEmpty {
-            Text(filter == .saved ? "아직 저장한 코스가 없어요." : "이 정류장에서 출발한 코스가 아직 없어요.")
+            Text(emptyMessage)
                 .wegoFont(.regular, 13)
                 .foregroundStyle(WeGoColor.gray500)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -183,6 +168,15 @@ struct StationSheet: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
             }
+        }
+    }
+
+    /// 탭별 빈 상태 문구. 1.0은 인기/저장이 아직 없다(서버 연동 후 채움).
+    private var emptyMessage: String {
+        switch filter {
+        case .recent: "이 정류장에서 출발한 내 기록이 아직 없어요.\n정류장에서 정류장까지 달리면 여기에 쌓여요."
+        case .popular: "인기 코스는 준비 중이에요."
+        case .saved: "코스 저장은 준비 중이에요."
         }
     }
 
