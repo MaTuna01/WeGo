@@ -43,7 +43,7 @@ class StationRefresherTest {
         return new Station(id, id, BikeOperator.TTAREUNGYI, 37.5, 126.9, 10);
     }
 
-    private final StationStore store = new StationStore();
+    private final StationStore store = new StationStore(tools.jackson.databind.json.JsonMapper.builder().build());
 
     private StationRefresher refresher(StationSource source) {
         return new StationRefresher(source, store, Clock.fixed(NOW, ZoneOffset.UTC));

@@ -20,6 +20,11 @@ server:
   port: ${SERVER_PORT:8080}
   # Caddy가 앞에서 HTTPS를 받아 중계함. X-Forwarded-* 헤더로 원래 요청 정보 사용
   forward-headers-strategy: native
+  # 정류장 목록(약 2,700곳, 수백 KB)을 gzip으로 압축해 보냄. 앱(URLSession)은 자동으로 풂
+  compression:
+    enabled: true
+    mime-types: application/json,application/problem+json
+    min-response-size: 2KB
 
 wego:
   app:
