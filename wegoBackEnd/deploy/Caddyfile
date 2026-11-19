@@ -1,0 +1,14 @@
+# api.wegoride.site HTTPS 인증서는 Caddy가 Let's Encrypt로 자동 발급, 갱신함
+# 도메인 A 레코드가 이 VM을 가리키고 80/443이 열려 있어야 발급됨
+
+api.wegoride.site {
+	# 응답 압축은 Spring이 이미 하므로 여기서는 하지 않음
+	reverse_proxy api:8080
+
+	# 서버 종류를 알리지 않음
+	header -Server
+
+	log {
+		output stdout
+	}
+}
