@@ -8,6 +8,8 @@ build/
 # 비밀 값 — 커밋하지 말고 *.example 파일만 올린다
 Secrets.xcconfig
 *.secret.xcconfig
+# 개인 개발용 서버 주소 덮어쓰기(Config/WeGo.xcconfig 참고)
+Local.xcconfig
 GoogleService-Info.plist
 
 # 서명·인증 파일
