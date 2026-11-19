@@ -39,9 +39,17 @@ struct HomeView: View {
     @State private var topBarBottom: CGFloat = 160
     /// 시트를 담는 영역(이 화면). 아래끝이 시트·지도의 아래끝이다.
     @State private var containerFrame: CGRect = .zero
+    /// 지도에 보이는 영역. 첫 카메라 이동 전에는 기본 위치로 본다.
+    @State private var mapRegion: MKCoordinateRegion = MockData.defaultRegion
 
-    private var visibleStations: [Station] {
+    /// 운영사 칩으로 거른 전체 정류장
+    private var filteredStations: [Station] {
         appState.stationRepository.stations.filter { operatorFilter == nil || $0.bikeOperator == operatorFilter }
+    }
+
+    /// 지도에 실제로 그리는 정류장(보이는 영역 근처, 개수 제한)
+    private var mapStations: StationMapFilter.Result {
+        StationMapFilter.stations(filteredStations, in: mapRegion, selectedID: selectedStationID)
     }
 
     private var selectedStation: Station? {
@@ -66,14 +74,23 @@ struct HomeView: View {
     }
 
     var body: some View {
+        let shown = mapStations
         ZStack(alignment: .top) {
             StationMapView(
-                stations: visibleStations,
+                stations: shown.stations,
                 selectedID: $selectedStationID,
                 position: $camera,
-                course: selectedCourse
+                course: selectedCourse,
+                onRegionChange: { mapRegion = $0 }
             )
             .ignoresSafeArea()
+
+            if shown.isZoomedOutTooFar {
+                MapZoomHint()
+                    .padding(.top, topBarBottom - containerFrame.minY + 12)
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
 
             MapTopBar(
                 title: selectedStation?.name,
@@ -92,6 +109,7 @@ struct HomeView: View {
             sheet
         }
         .animation(.spring(duration: 0.3), value: selectedStationID)
+        .animation(.easeInOut(duration: 0.2), value: mapStations.isZoomedOutTooFar)
         .onAppear {
             appState.location.requestPermission()
         }
@@ -122,7 +140,7 @@ struct HomeView: View {
             if selectedStation != nil { fitSelectedCourse() }
         }
         .onChange(of: operatorFilter) { _, _ in
-            if let selectedStation, !visibleStations.contains(selectedStation) {
+            if let selectedStation, !filteredStations.contains(selectedStation) {
                 selectedStationID = nil
             }
         }

@@ -10,6 +10,8 @@ struct StationMapView: View {
     @Binding var position: MapCameraPosition
     /// 정류장 시트에서 고른 코스. 있으면 경로 선을 그린다(Figma 299:121).
     var course: Course?
+    /// 지도를 움직이고 멈췄을 때 보이는 영역(그릴 정류장을 다시 고른다)
+    var onRegionChange: (MKCoordinateRegion) -> Void = { _ in }
 
     var body: some View {
         Map(position: $position, selection: $selectedID) {
@@ -30,6 +32,9 @@ struct StationMapView: View {
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .onMapCameraChange(frequency: .onEnd) { context in
+            onRegionChange(context.region)
+        }
     }
 
     /// 코스 전체가 시트 위 지도 영역(상단 칩 아래 ~ 시트 위)에 들어오도록 하는 카메라 영역.
@@ -113,6 +118,18 @@ struct CurrentLocationMarker: View {
 
 /// 지도 상단: 검색바 자리(선택한 정류장 이름) + 내 위치 버튼 + 운영사 필터 칩
 /// 와이어프레임의 칩 3개는 내용이 비어 있어 운영사 필터(전체/따릉이/타슈)로 채웠다.
+/// 너무 넓게 축소해서 정류장을 그리지 않을 때 상단 칩 아래에 띄우는 안내
+struct MapZoomHint: View {
+    var body: some View {
+        Text("지도를 확대하면 정류장이 보여요")
+            .wegoFont(.medium, 14, tracking: -0.4)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(WeGoColor.buttonDark.opacity(0.9), in: Capsule())
+    }
+}
+
 struct MapTopBar: View {
     let title: String?
     @Binding var operatorFilter: BikeOperator?
