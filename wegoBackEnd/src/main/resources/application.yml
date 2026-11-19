@@ -21,6 +21,11 @@ server:
   # Caddy가 앞에서 HTTPS를 받아 중계함. X-Forwarded-* 헤더로 원래 요청 정보 사용
   forward-headers-strategy: native
 
+wego:
+  app:
+    # 최소 지원 앱 버전. 환경 변수 WEGO_MINIMUM_VERSION으로 지정, 없으면 1.0.0
+    minimum-version: ${WEGO_MINIMUM_VERSION:1.0.0}
+
 management:
   endpoints:
     web:
