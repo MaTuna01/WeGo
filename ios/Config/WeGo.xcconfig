@@ -2,9 +2,8 @@
 
 // Spring 서버 주소. 비워 두면 서버를 호출하지 않고 기기 저장본과 앱 내장 정류장 목록으로 동작한다.
 // xcconfig에서는 // 뒤가 주석이 되므로 주소의 // 는 /$()/ 로 적는다.
-//   예) WEGO_API_BASE_URL = https:/$()/api.example.com
 // 출시 빌드는 HTTPS 도메인만 쓴다(IP 금지, 서버를 옮기면 DNS만 바꾼다).
-WEGO_API_BASE_URL =
+WEGO_API_BASE_URL = https:/$()/api.wegoride.site
 
 // App Store Connect의 앱 Apple ID(숫자). 업데이트 안내가 이 앱의 App Store 페이지를 연다.
 // 비어 있으면 App Store에서 "위고"를 검색한다. 공개 값이라 커밋해도 된다.
