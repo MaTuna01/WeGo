@@ -25,6 +25,19 @@ wego:
   app:
     # 최소 지원 앱 버전. 환경 변수 WEGO_MINIMUM_VERSION으로 지정, 없으면 1.0.0
     minimum-version: ${WEGO_MINIMUM_VERSION:1.0.0}
+  stations:
+    # 정류장 목록 갱신 주기, 한 번도 받지 못했을 때 재시도 간격
+    refresh-interval: PT6H
+    retry-interval: PT1M
+  seoul-bike:
+    # 서울 열린데이터광장 공공자전거 API 인증키. 환경 변수 SEOUL_OPEN_API_KEY로만 주입, 없으면 수집 안 함
+    api-key: ${SEOUL_OPEN_API_KEY:}
+    # 서울시 API는 HTTP(8088)만 제공함
+    base-url: http://openapi.seoul.go.kr:8088
+    page-size: 1000
+    max-pages: 10
+    connect-timeout: PT5S
+    read-timeout: PT20S
 
 management:
   endpoints:
