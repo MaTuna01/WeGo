@@ -116,8 +116,6 @@ struct CurrentLocationMarker: View {
     }
 }
 
-/// 지도 상단: 검색바 자리(선택한 정류장 이름) + 내 위치 버튼 + 운영사 필터 칩
-/// 와이어프레임의 칩 3개는 내용이 비어 있어 운영사 필터(전체/따릉이/타슈)로 채웠다.
 /// 너무 넓게 축소해서 정류장을 그리지 않을 때 상단 칩 아래에 띄우는 안내
 struct MapZoomHint: View {
     var body: some View {
@@ -130,6 +128,9 @@ struct MapZoomHint: View {
     }
 }
 
+/// 지도 상단: 검색바 자리(선택한 정류장 이름) + 내 위치 버튼 + 운영사 필터 칩
+/// 와이어프레임의 칩 3개는 내용이 비어 있어 운영사 필터(전체/따릉이/타슈)로 채웠다.
+/// 지원 운영사가 하나뿐인 1.0에서는 칩이 의미가 없어 숨긴다(BikeOperator.available).
 struct MapTopBar: View {
     let title: String?
     @Binding var operatorFilter: BikeOperator?
@@ -150,13 +151,15 @@ struct MapTopBar: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("내 위치로 이동")
             }
-            HStack(spacing: 17) {
-                PillChip(title: "전체", isSelected: operatorFilter == nil, width: 90) {
-                    operatorFilter = nil
-                }
-                ForEach(BikeOperator.allCases, id: \.self) { bikeOperator in
-                    PillChip(title: bikeOperator.displayName, isSelected: operatorFilter == bikeOperator, width: 90) {
-                        operatorFilter = bikeOperator
+            if BikeOperator.available.count > 1 {
+                HStack(spacing: 17) {
+                    PillChip(title: "전체", isSelected: operatorFilter == nil, width: 90) {
+                        operatorFilter = nil
+                    }
+                    ForEach(BikeOperator.available, id: \.self) { bikeOperator in
+                        PillChip(title: bikeOperator.displayName, isSelected: operatorFilter == bikeOperator, width: 90) {
+                            operatorFilter = bikeOperator
+                        }
                     }
                 }
             }

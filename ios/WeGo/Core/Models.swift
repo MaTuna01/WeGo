@@ -11,6 +11,10 @@ enum BikeOperator: String, CaseIterable, Hashable {
         case .tashu: "타슈"
         }
     }
+
+    /// 1.0에서 지원하는 운영사. 서버가 따릉이만 내려주므로 타슈 필터를 보여주면 빈 지도가 된다.
+    /// 운영사가 하나뿐이면 홈의 운영사 필터 칩을 숨긴다(MapTopBar).
+    static let available: [BikeOperator] = [.ttareungyi]
 }
 
 /// 공유자전거 정류장. 서버의 공통 Station 모델(운영사별 어댑터로 변환된 값)에 대응한다.
@@ -114,6 +118,10 @@ enum CourseFilter: CaseIterable, Hashable {
         case .saved: "저장 코스"
         }
     }
+
+    /// 1.0에서 보여줄 탭. 인기(다른 사람의 공유 경로)와 저장은 서버 연동(1.1) 후에 다시 넣는다.
+    /// 심사에서 "준비 중" 화면은 미완성으로 보고 반려될 수 있어서 아예 숨긴다.
+    static let available: [CourseFilter] = [.recent]
 }
 
 /// 이용권. 시간권 선택 화면은 아직 디자인이 없어 1시간권을 기본으로 쓴다.
@@ -150,4 +158,7 @@ enum MainTab: CaseIterable, Hashable {
         case .profile: "내 정보"
         }
     }
+
+    /// 1.0 탭바에 보여줄 탭. 저장 탭은 디자인과 코스 저장 기능이 나오면 다시 넣는다.
+    static let available: [MainTab] = [.home, .ride, .profile]
 }

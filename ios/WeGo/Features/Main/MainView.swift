@@ -13,6 +13,7 @@ struct MainView: View {
                 case .home:
                     HomeView()
                 case .saved:
+                    // 1.0 탭바에는 없는 탭(MainTab.available). 다시 넣을 때 실제 화면으로 바꾼다.
                     PlaceholderTabView(
                         title: "저장한 코스",
                         message: "마음에 드는 코스를 저장하면 여기에 모여요.\n이 화면은 디자인이 나오면 채울게요."

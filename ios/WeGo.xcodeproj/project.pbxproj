@@ -418,7 +418,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "위고";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "가까운 정류장을 찾고 라이딩 경로와 거리를 기록하기 위해 위치 정보가 필요해요.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "지도에서 가까운 정류장을 보여 주고, 라이딩 중에는 화면을 꺼도 달린 경로와 거리를 기록하기 위해 위치 정보를 사용해요. 위치는 이 기기에만 저장돼요.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -451,7 +451,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "위고";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "가까운 정류장을 찾고 라이딩 경로와 거리를 기록하기 위해 위치 정보가 필요해요.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "지도에서 가까운 정류장을 보여 주고, 라이딩 중에는 화면을 꺼도 달린 경로와 거리를 기록하기 위해 위치 정보를 사용해요. 위치는 이 기기에만 저장돼요.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

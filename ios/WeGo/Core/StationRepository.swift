@@ -134,7 +134,8 @@ final class StationRepository {
         return url
     }
 
-    /// Resources/Stations/bundled-stations.json(계약과 같은 모양). 서버가 준비되면 실제 목록으로 바꾼다.
+    /// Resources/Stations/bundled-stations.json(계약과 같은 모양). 서버 GET /stations 응답을 그대로 담아 둔 것.
+    /// 서버 장애나 첫 실행 오프라인 때 쓰므로 출시 전에 최신 응답으로 갈아 둔다.
     static func loadBundledData() -> Data? {
         Bundle.main.url(forResource: "bundled-stations", withExtension: "json").flatMap { try? Data(contentsOf: $0) }
     }
