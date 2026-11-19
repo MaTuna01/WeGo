@@ -112,7 +112,7 @@ struct StationSheet: View {
     private var listContent: some View {
         VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    ForEach(CourseFilter.allCases, id: \.self) { item in
+                    ForEach(CourseFilter.available, id: \.self) { item in
                         PillChip(
                             title: item.title,
                             isSelected: filter == item,
@@ -172,7 +172,7 @@ struct StationSheet: View {
         }
     }
 
-    /// 탭별 빈 상태 문구. 1.0은 인기/저장이 아직 없다(서버 연동 후 채움).
+    /// 탭별 빈 상태 문구. 1.0은 최신 탭만 보인다(CourseFilter.available).
     private var emptyMessage: String {
         switch filter {
         case .recent: "이 정류장에서 출발한 내 기록이 아직 없어요.\n정류장에서 정류장까지 달리면 여기에 쌓여요."

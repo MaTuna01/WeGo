@@ -13,7 +13,7 @@ struct WeGoTabBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(MainTab.allCases, id: \.self) { tab in
+            ForEach(MainTab.available, id: \.self) { tab in
                 Button {
                     selection = tab
                 } label: {
