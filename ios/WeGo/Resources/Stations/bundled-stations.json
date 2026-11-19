@@ -1,0 +1,52 @@
+{
+  "stations": [
+    {
+      "id": "ST-YN-01",
+      "name": "여의나루역 1번출구 앞",
+      "operator": "ttareungyi",
+      "latitude": 37.5271,
+      "longitude": 126.9329,
+      "dockCount": 15
+    },
+    {
+      "id": "ST-YD-HG",
+      "name": "여의도 한강공원 원효대교 남단",
+      "operator": "ttareungyi",
+      "latitude": 37.5232,
+      "longitude": 126.9392,
+      "dockCount": 20
+    },
+    {
+      "id": "ST-GH-01",
+      "name": "국회의사당역 1번출구",
+      "operator": "ttareungyi",
+      "latitude": 37.5284,
+      "longitude": 126.9176,
+      "dockCount": 12
+    },
+    {
+      "id": "ST-YD-05",
+      "name": "여의도역 5번출구",
+      "operator": "ttareungyi",
+      "latitude": 37.5215,
+      "longitude": 126.9243,
+      "dockCount": 10
+    },
+    {
+      "id": "TS-EXPO",
+      "name": "엑스포다리 남단",
+      "operator": "tashu",
+      "latitude": 36.3763,
+      "longitude": 127.3872,
+      "dockCount": 10
+    },
+    {
+      "id": "TS-DDB",
+      "name": "갑천 대덕대교 남단",
+      "operator": "tashu",
+      "latitude": 36.37,
+      "longitude": 127.394,
+      "dockCount": 8
+    }
+  ]
+}

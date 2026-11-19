@@ -194,9 +194,8 @@ final class RideRecordStore {
         context = MainActor.assumeIsolated { container.mainContext }
     }
 
-    /// 반납 완료한 주행을 저장한다. 정류장 목록으로 출발·도착 정류장과 공유 구간을 함께 판정한다.
-    /// TODO: 정류장 목록은 StationRepository(서버 정류장 목록 캐시)가 생기면 그 목록으로 바꾼다.
-    func save(_ session: RideSession, endedAt: Date = .now, stations: [Station] = MockData.stations) {
+    /// 반납 완료한 주행을 저장한다. 정류장 목록(StationRepository)으로 출발, 도착 정류장과 공유 구간을 함께 판정한다.
+    func save(_ session: RideSession, endedAt: Date = .now, stations: [Station]) {
         let record = RideRecord(session: session, endedAt: endedAt, stations: stations)
         context.insert(record)
         do {

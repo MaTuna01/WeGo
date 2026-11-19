@@ -41,11 +41,11 @@ struct HomeView: View {
     @State private var containerFrame: CGRect = .zero
 
     private var visibleStations: [Station] {
-        MockData.stations.filter { operatorFilter == nil || $0.bikeOperator == operatorFilter }
+        appState.stationRepository.stations.filter { operatorFilter == nil || $0.bikeOperator == operatorFilter }
     }
 
     private var selectedStation: Station? {
-        MockData.stations.first { $0.id == selectedStationID }
+        appState.stationRepository.station(id: selectedStationID)
     }
 
     /// 정류장 시트 코스 목록. 1.0은 서버 공유 경로가 없어서, 최신 탭에 이 정류장에서 출발한 내 기록만 보여준다.

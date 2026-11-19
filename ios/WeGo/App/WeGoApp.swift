@@ -16,6 +16,7 @@ struct WeGoApp: App {
                     switch phase {
                     case .active:
                         Task { await appState.checkMinimumVersion() }
+                        Task { await appState.stationRepository.refresh() }
                     case .background:
                         // 백그라운드에서 그대로 종료될 수 있으니 진행 중 주행을 저장해 둔다.
                         appState.persistActiveRide()

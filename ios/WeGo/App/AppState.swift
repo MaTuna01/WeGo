@@ -23,6 +23,8 @@ final class AppState {
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()
     @ObservationIgnored private let rideReminder = RideReminder()
+    /// 정류장 목록(서버 -> 기기 저장본 -> 앱 내장 목록). 주행 복구가 쓰므로 restoreActiveRide보다 먼저 만든다.
+    @ObservationIgnored let stationRepository = StationRepository()
     /// 끝난 주행 기록(기기 저장)
     @ObservationIgnored let rideRecords = RideRecordStore()
     /// 진행 중 주행(앱이 꺼져도 이어서 기록)
@@ -141,7 +143,7 @@ final class AppState {
     /// TODO: 라이딩 요약 화면(디자인 대기), 서버에 기록 업로드
     func endRide() {
         if let ride {
-            rideRecords.save(ride)
+            rideRecords.save(ride, stations: stationRepository.stations)
         }
         activeRideStore.clear()
         rideActivity.end()
@@ -154,7 +156,7 @@ final class AppState {
     /// 앱을 다시 켰을 때 진행 중이던 주행을 되살린다. 주행 탭으로 가서 이어서 기록하고 Live Activity도 이어 쓴다.
     private func restoreActiveRide() {
         guard let snapshot = activeRideStore.load(),
-              let station = MockData.station(id: snapshot.startStationID)
+              let station = stationRepository.station(id: snapshot.startStationID)
         else {
             activeRideStore.clear()
             RideActivityController.endAll()
@@ -171,7 +173,7 @@ final class AppState {
 
         if Date.now.timeIntervalSince(session.startedAt) > Self.restoreLimit {
             // 너무 오래된 주행은 마지막 위치 시각에 끝난 것으로 기록만 남긴다.
-            rideRecords.save(session, endedAt: session.trackPoints.last?.timestamp ?? session.startedAt)
+            rideRecords.save(session, endedAt: session.trackPoints.last?.timestamp ?? session.startedAt, stations: stationRepository.stations)
             activeRideStore.clear()
             RideActivityController.endAll()
             return
