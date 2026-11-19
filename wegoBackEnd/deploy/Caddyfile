@@ -1,14 +1,72 @@
-# api.wegoride.site HTTPS 인증서는 Caddy가 Let's Encrypt로 자동 발급, 갱신함
+# wegoride.site(정적 페이지)와 api.wegoride.site(Spring) HTTPS 인증서는 Caddy가 Let's Encrypt로 자동 발급, 갱신함
 # 도메인 A 레코드가 이 VM을 가리키고 80/443이 열려 있어야 발급됨
+
+{
+	# 접속 로그 외 로그(오류, 중계 실패 등)에서도 IP와 요청 헤더를 지움(개인정보 처리방침: IP 저장 안 함)
+	log default {
+		output stdout
+		format filter {
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+			}
+		}
+		# TLS 핸드셰이크 오류 등 Go 표준 로그는 메시지 문자열에 IP가 들어가 지울 수 없어 남기지 않음
+		exclude http.stdlib
+	}
+}
+
+# 접속 로그: 시각, 경로, 상태, 소요 시간만 남김. IP, 포트, 요청 헤더(User-Agent 등)는 지움
+(access_log) {
+	log {
+		output stdout
+		format filter {
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+			}
+		}
+	}
+}
+
+# 서버 종류를 알리지 않음
+(common_headers) {
+	header -Server
+}
 
 api.wegoride.site {
 	# 응답 압축은 Spring이 이미 하므로 여기서는 하지 않음
 	reverse_proxy api:8080
 
-	# 서버 종류를 알리지 않음
-	header -Server
+	import common_headers
+	import access_log
+}
 
-	log {
-		output stdout
+# 개인정보 처리방침, 지원 페이지(App Store Connect와 앱 내 정보 화면이 여는 주소)
+wegoride.site {
+	root * /srv/site
+	# /privacy, /support 처럼 확장자 없이 열리게 함
+	try_files {path} {path}.html
+	file_server
+	encode zstd gzip
+
+	import common_headers
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		# 외부 스크립트, 글꼴 없이 같은 출처의 CSS만 씀
+		Content-Security-Policy "default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 	}
+	import access_log
+}
+
+# www 주소로 들어오면 wegoride.site로 보냄(DNS에 www A 레코드가 있음)
+www.wegoride.site {
+	redir https://wegoride.site{uri} permanent
+	import common_headers
+	import access_log
 }
