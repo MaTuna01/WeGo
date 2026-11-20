@@ -1,0 +1,213 @@
+import SwiftUI
+
+/// 정류장 선택 전 홈 시트 (Figma 299:58): 나의 이용 기록. 끌어서 높이를 바꾼다.
+/// 디자인의 "많이 찾는 코스"는 다른 사람의 공유 경로가 필요해서 서버 연동(1.1) 때 다시 넣는다.
+struct HomeSheet: View {
+    /// 최근 주행 기록(최대 3개, 최신순)
+    let myRides: [RideRecord]
+    @Binding var detent: SheetDetent
+    let heights: (CGFloat) -> SheetHeights
+
+    var body: some View {
+        DraggableBottomSheet(detent: $detent, heights: heights) {
+            SheetScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    sectionTitle("나의 이용 기록")
+                        .padding(.top, 15)
+                    if myRides.isEmpty {
+                        emptyText("첫 라이딩을 마치면 기록이 여기에 쌓여요.")
+                            .padding(.top, 7)
+                    } else {
+                        rideRow(myRides)
+                            .padding(.top, 7)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 120) // 플로팅 탭바에 가리지 않게
+            }
+        }
+    }
+
+    private func sectionTitle(_ text: String) -> some View {
+        Text(text)
+            .wegoFont(.regular, 14, tracking: -0.7)
+            .foregroundStyle(.black)
+    }
+
+    private func rideRow(_ rides: [RideRecord]) -> some View {
+        HStack(spacing: 20) {
+            ForEach(rides.prefix(3)) { ride in
+                CourseCard(title: ride.cardTitle, subtitle: ride.cardSubtitle)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 116)
+            }
+            // 3개보다 적으면 빈 자리를 둬서 카드 폭을 그대로 유지한다.
+            ForEach(0..<max(0, 3 - rides.count), id: \.self) { _ in
+                Color.clear
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 116)
+            }
+        }
+    }
+
+    private func emptyText(_ text: String) -> some View {
+        Text(text)
+            .wegoFont(.regular, 13)
+            .foregroundStyle(WeGoColor.gray500)
+            .frame(maxWidth: .infinity, minHeight: 116)
+    }
+}
+
+/// 정류장 선택 후 시트 (Figma 299:121): 인기/최신/저장 코스 탭, 세로 코스 카드 목록, 코스 선택하기 / 대여하러 가기
+/// 기획상 필요한 "잔여 대수(참고)"는 시안에 자리가 없어 아직 넣지 않았다 — 디자이너와 위치 결정 필요.
+struct StationSheet: View {
+    @Environment(AppState.self) private var appState
+    let station: Station
+    @Binding var filter: CourseFilter
+    let courses: [Course]
+    /// 카드를 눌러 고른 코스(주황 테두리, 지도에 경로 표시)
+    @Binding var selectedCourseID: Course.ID?
+    /// `>`로 연 코스 상세. 있으면 목록 대신 상세를 보여준다(Figma 299:224).
+    @Binding var detailCourseID: Course.ID?
+    /// "코스 선택하기"로 이번 주행 코스로 지정한 코스
+    let chosenCourseID: Course.ID?
+    let onChooseCourse: () -> Void
+    let onRent: () -> Void
+    @Binding var detent: SheetDetent
+    let heights: (CGFloat) -> SheetHeights
+
+    /// 하단 버튼 아래로 플로팅 탭바(58)와 여백(위 24, 아래 23)이 들어갈 자리
+    private let tabBarReserve: CGFloat = 24 + 58 + 23
+
+    var body: some View {
+        // 하단 버튼은 어느 높이에서든 보여야 해서, 접힐 때는 위쪽 목록·상세만 흐리게 하고 줄여서 가린다.
+        DraggableBottomSheet(detent: $detent, handleTopPadding: 13, fadesContentWhenCollapsed: false, heights: heights) {
+            VStack(alignment: .leading, spacing: 0) {
+                Group {
+                    if let detailCourse = courses.first(where: { $0.id == detailCourseID }) {
+                        CourseDetailView(
+                            course: detailCourse,
+                            startName: startName(of: detailCourse),
+                            endName: endName(of: detailCourse),
+                            onBack: { detailCourseID = nil }
+                        )
+                        .padding(.top, 14)
+                    } else {
+                        listContent
+                    }
+                }
+                // 접힘에서는 0까지 줄어들어 버튼을 밀어내지 않게 한다.
+                .frame(minHeight: 0, maxHeight: .infinity, alignment: .top)
+                .clipped()
+                .fadesWhenSheetCollapses()
+
+                buttons
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, tabBarReserve)
+            }
+        }
+    }
+
+    private var listContent: some View {
+        VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 8) {
+                    ForEach(CourseFilter.available, id: \.self) { item in
+                        PillChip(
+                            title: item.title,
+                            isSelected: filter == item,
+                            width: 76,
+                            height: 26,
+                            background: WeGoColor.chip,
+                            selectedBackground: WeGoColor.primaryLight,
+                            selectedForeground: .black
+                        ) {
+                            filter = item
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 17)
+
+                courseList
+                    .padding(.top, 20)
+        }
+    }
+
+    private func startName(of course: Course) -> String {
+        appState.stationRepository.station(id: course.startStationID)?.name ?? station.name
+    }
+
+    private func endName(of course: Course) -> String {
+        appState.stationRepository.station(id: course.endStationID)?.name ?? "도착 정류장"
+    }
+
+    @ViewBuilder
+    private var courseList: some View {
+        if courses.isEmpty {
+            Text(emptyMessage)
+                .wegoFont(.regular, 13)
+                .foregroundStyle(WeGoColor.gray500)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            SheetScrollView {
+                VStack(spacing: 12) {
+                    ForEach(courses) { course in
+                        CourseRow(
+                            course: course,
+                            startName: startName(of: course),
+                            endName: endName(of: course),
+                            isSelected: selectedCourseID == course.id,
+                            onDetail: {
+                                selectedCourseID = course.id
+                                detailCourseID = course.id
+                            }
+                        )
+                        .onTapGesture { selectedCourseID = course.id }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+            }
+        }
+    }
+
+    /// 탭별 빈 상태 문구. 1.0은 최신 탭만 보인다(CourseFilter.available).
+    private var emptyMessage: String {
+        switch filter {
+        case .recent: "이 정류장에서 출발한 내 기록이 아직 없어요.\n정류장에서 정류장까지 달리면 여기에 쌓여요."
+        case .popular: "인기 코스는 준비 중이에요."
+        case .saved: "코스 저장은 준비 중이에요."
+        }
+    }
+
+    /// 173×52 버튼 두 개, 간격 16
+    private var buttons: some View {
+        HStack(spacing: 16) {
+            // 지정 상태 디자인이 아직 없어 "선택됨" + 주황 배경으로 임시 구분한다.
+            let isChosen = selectedCourseID != nil && selectedCourseID == chosenCourseID
+            sheetButton(
+                isChosen ? "선택됨" : "코스 선택하기",
+                background: isChosen ? WeGoColor.primaryLight : WeGoColor.gray500,
+                action: onChooseCourse
+            )
+            .disabled(selectedCourseID == nil)
+            .accessibilityHint(isChosen ? "다시 누르면 코스 지정을 해제해요" : "대여 후 이 코스로 안내해요")
+            sheetButton("대여하러 가기", background: WeGoColor.buttonDark, action: onRent)
+                .accessibilityHint("\(station.bikeOperator.displayName) 앱으로 이동해 대여해요")
+        }
+    }
+
+    private func sheetButton(_ title: String, background: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .wegoFont(.medium, 18, tracking: -0.5)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(background, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}

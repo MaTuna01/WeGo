@@ -1,3 +1,59 @@
 spring:
   application:
     name: wegoBackEnd
+  autoconfigure:
+    # 1.0 최소 서버는 DB를 쓰지 않음(정류장 목록은 메모리). 의존성은 1.1(로그인, 기록 업로드) 대비로 남김.
+    # 로그인이 없으므로 기본 사용자(임시 비밀번호)도 만들지 않음
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  mvc:
+    # 오류 응답을 RFC 9457 ProblemDetail로 전송.
+    problemdetails:
+      enabled: true
+
+server:
+  # 포트는 환경 변수 SERVER_PORT로 지정, 없으면 8080
+  port: ${SERVER_PORT:8080}
+  # Caddy가 앞에서 HTTPS를 받아 중계함. X-Forwarded-* 헤더로 원래 요청 정보 사용
+  forward-headers-strategy: native
+  # 정류장 목록(약 2,700곳, 수백 KB)을 gzip으로 압축해 보냄. 앱(URLSession)은 자동으로 풂
+  compression:
+    enabled: true
+    mime-types: application/json,application/problem+json
+    min-response-size: 2KB
+
+wego:
+  app:
+    # 최소 지원 앱 버전. 환경 변수 WEGO_MINIMUM_VERSION으로 지정, 없으면 1.0.0
+    minimum-version: ${WEGO_MINIMUM_VERSION:1.0.0}
+  stations:
+    # 정류장 목록 갱신 주기, 한 번도 받지 못했을 때 재시도 간격
+    refresh-interval: PT6H
+    retry-interval: PT1M
+  seoul-bike:
+    # 서울 열린데이터광장 공공자전거 API 인증키. 환경 변수 SEOUL_OPEN_API_KEY로만 주입, 없으면 수집 안 함
+    api-key: ${SEOUL_OPEN_API_KEY:}
+    # 서울시 API는 HTTP(8088)만 제공함
+    base-url: http://openapi.seoul.go.kr:8088
+    page-size: 1000
+    max-pages: 10
+    connect-timeout: PT5S
+    read-timeout: PT20S
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  pattern:
+    # 모든 로그 줄에 앱 버전(X-App-Version)을 첨부
+    level: "%5p [app %X{appVersion:-}]"

@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="27" height="58" viewBox="0 0 27 58" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="fa6-solid:location-pin">
+<g id="Vector">
+<use xlink:href="#stroke0_0_18" fill="white"/>
+<mask id="stroke1_0_18" fill="white">
+<use xlink:href="#stroke0_0_18"/>
+</mask>
+<path d="M27 13.875C27 20.191 18.7734 31.4355 15.1664 36.075C14.3016 37.1807 12.6984 37.1807 11.8336 36.075C8.22656 31.4355 0 20.191 0 13.875C0 6.21484 6.04688 0 13.5 0C20.9531 0 27 6.21484 27 13.875Z" stroke-width="2" stroke="#FD9E34" mask="url(#stroke1_0_18)"/>
+</g>
+<circle id="Ellipse 2242" cx="14" cy="50" r="8" fill="#232323"/>
+</g>
+<defs>
+<path id="stroke0_0_18" d="M27 13.875C27 20.191 18.7734 31.4355 15.1664 36.075C14.3016 37.1807 12.6984 37.1807 11.8336 36.075C8.22656 31.4355 0 20.191 0 13.875C0 6.21484 6.04688 0 13.5 0C20.9531 0 27 6.21484 27 13.875Z"/>
+</defs>
+</svg>
