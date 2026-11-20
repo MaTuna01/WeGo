@@ -118,6 +118,22 @@ a {
   margin-bottom: 24px;
 }
 
+.store-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #1b1b1b;    /* 밝은, 어두운 모드 주황 배경 모두에서 대비 확보 */
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .box {
   background: var(--box);
   border-radius: 14px;
