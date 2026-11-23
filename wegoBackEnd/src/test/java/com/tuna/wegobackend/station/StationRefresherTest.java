@@ -18,13 +18,29 @@ class StationRefresherTest {
 
     /** 호출할 때마다 정해 둔 결과를 차례로 돌려주는 가짜 수집기 */
     static class FakeSource implements StationSource {
+        final BikeOperator operator;
         final Deque<Supplier<List<Station>>> results = new ArrayDeque<>();
         boolean enabled = true;
         int calls;
 
+        FakeSource(BikeOperator operator) {
+            this.operator = operator;
+        }
+
         FakeSource then(Supplier<List<Station>> result) {
             results.add(result);
             return this;
+        }
+
+        FakeSource thenFail() {
+            return then(() -> {
+                throw new StationFetchException(operator.code() + " API 호출 실패");
+            });
+        }
+
+        @Override
+        public BikeOperator operator() {
+            return operator;
         }
 
         @Override
@@ -39,20 +55,36 @@ class StationRefresherTest {
         }
     }
 
+    private static FakeSource seoul() {
+        return new FakeSource(BikeOperator.TTAREUNGYI);
+    }
+
+    private static FakeSource tashu() {
+        return new FakeSource(BikeOperator.TASHU);
+    }
+
     private static Station station(String id) {
-        return new Station(id, id, BikeOperator.TTAREUNGYI, 37.5, 126.9, 10);
+        return station(id, BikeOperator.TTAREUNGYI);
+    }
+
+    private static Station station(String id, BikeOperator operator) {
+        return new Station(id, id, operator, 37.5, 126.9, 10);
     }
 
     private final StationStore store = new StationStore(tools.jackson.databind.json.JsonMapper.builder().build());
 
-    private StationRefresher refresher(StationSource source) {
-        return new StationRefresher(source, store, Clock.fixed(NOW, ZoneOffset.UTC));
+    private StationRefresher refresher(StationSource... sources) {
+        return new StationRefresher(List.of(sources), store, Clock.fixed(NOW, ZoneOffset.UTC));
+    }
+
+    private List<String> storedIds() {
+        return store.current().orElseThrow().stations().stream().map(Station::id).toList();
     }
 
     @Test
     @DisplayName("받으면 목록과 갱신 시각을 바꾼다")
     void replacesOnSuccess() {
-        var refresher = refresher(new FakeSource().then(() -> List.of(station("A"), station("B"))));
+        var refresher = refresher(seoul().then(() -> List.of(station("A"), station("B"))));
 
         assertThat(refresher.refresh()).isTrue();
 
@@ -64,11 +96,9 @@ class StationRefresherTest {
     @Test
     @DisplayName("실패하거나 빈 목록, 예상 못 한 예외면 이전 목록을 유지한다")
     void keepsPreviousOnFailure() {
-        var source = new FakeSource()
+        var source = seoul()
                 .then(() -> List.of(station("A")))
-                .then(() -> {
-                    throw new StationFetchException("서울시 API HTTP 500");
-                })
+                .thenFail()
                 .then(List::of)
                 .then(() -> {
                     throw new IllegalStateException("unexpected");
@@ -80,13 +110,65 @@ class StationRefresherTest {
         assertThat(refresher.refresh()).isFalse();
         assertThat(refresher.refresh()).isFalse();
 
-        assertThat(store.current().orElseThrow().stations()).extracting(Station::id).containsExactly("A");
+        assertThat(storedIds()).containsExactly("A");
     }
 
     @Test
-    @DisplayName("인증키가 없으면 수집하지 않는다")
-    void skipsWhenDisabled() {
-        var source = new FakeSource();
+    @DisplayName("운영사별로 받은 목록을 합쳐 저장한다")
+    void mergesOperators() {
+        var refresher = refresher(
+                seoul().then(() -> List.of(station("A"))),
+                tashu().then(() -> List.of(station("T1", BikeOperator.TASHU), station("T2", BikeOperator.TASHU))));
+
+        assertThat(refresher.refresh()).isTrue();
+
+        assertThat(storedIds()).containsExactlyInAnyOrder("A", "T1", "T2");
+    }
+
+    @Test
+    @DisplayName("한 운영사가 실패하면 그 운영사만 이전 목록을 쓰고 다른 운영사는 갱신한다")
+    void keepsFailedOperatorOnly() {
+        var refresher = refresher(
+                seoul().then(() -> List.of(station("A"))).then(() -> List.of(station("A"), station("B"))),
+                tashu().then(() -> List.of(station("T1", BikeOperator.TASHU))).thenFail());
+
+        refresher.refresh();
+        assertThat(refresher.refresh()).isTrue();
+
+        assertThat(storedIds()).containsExactlyInAnyOrder("A", "B", "T1");
+    }
+
+    @Test
+    @DisplayName("모든 운영사가 실패하면 저장본을 바꾸지 않는다")
+    void keepsStoreWhenAllFail() {
+        var refresher = refresher(
+                seoul().then(() -> List.of(station("A"))).thenFail(),
+                tashu().then(() -> List.of(station("T1", BikeOperator.TASHU))).thenFail());
+
+        refresher.refresh();
+        var before = store.current().orElseThrow();
+
+        assertThat(refresher.refresh()).isFalse();
+        assertThat(store.current().orElseThrow()).isSameAs(before);
+    }
+
+    @Test
+    @DisplayName("인증키가 없는 운영사는 건너뛰고 나머지만 받는다")
+    void skipsDisabledOperator() {
+        var seoul = seoul().then(() -> List.of(station("A")));
+        var tashu = tashu();
+        tashu.enabled = false;
+
+        assertThat(refresher(seoul, tashu).refresh()).isTrue();
+
+        assertThat(tashu.calls).isZero();
+        assertThat(storedIds()).containsExactly("A");
+    }
+
+    @Test
+    @DisplayName("모든 운영사가 꺼져 있으면 수집하지 않는다")
+    void skipsWhenAllDisabled() {
+        var source = seoul();
         source.enabled = false;
 
         assertThat(refresher(source).refresh()).isFalse();
@@ -95,20 +177,18 @@ class StationRefresherTest {
     }
 
     @Test
-    @DisplayName("재시도는 한 번도 받지 못했을 때만 한다")
-    void retriesOnlyWhenEmpty() {
-        var source = new FakeSource()
-                .then(() -> {
-                    throw new StationFetchException("서울시 API 호출 실패");
-                })
-                .then(() -> List.of(station("A")));
-        var refresher = refresher(source);
+    @DisplayName("재시도는 한 번도 받지 못한 운영사만 한다")
+    void retriesOnlyMissingOperators() {
+        var seoul = seoul().then(() -> List.of(station("A")));
+        var tashu = tashu().thenFail().then(() -> List.of(station("T1", BikeOperator.TASHU)));
+        var refresher = refresher(seoul, tashu);
 
-        refresher.retryIfEmpty(); // 실패
-        refresher.retryIfEmpty(); // 성공
-        refresher.retryIfEmpty(); // 이미 있으므로 호출하지 않음
+        refresher.refresh();      // 따릉이 성공, 타슈 실패
+        refresher.retryMissing(); // 타슈만 다시 시도해 성공
+        refresher.retryMissing(); // 둘 다 받았으므로 호출하지 않음
 
-        assertThat(source.calls).isEqualTo(2);
-        assertThat(store.isEmpty()).isFalse();
+        assertThat(seoul.calls).isEqualTo(1);
+        assertThat(tashu.calls).isEqualTo(2);
+        assertThat(storedIds()).containsExactlyInAnyOrder("A", "T1");
     }
 }
