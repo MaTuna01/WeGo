@@ -7,6 +7,9 @@ import java.util.List;
  */
 public interface StationSource {
 
+    /** 이 수집기가 맡은 운영사. 운영사마다 수집기 하나 */
+    BikeOperator operator();
+
     /**
      * 전체 목록을 받음. 일부만 받은 상태로 돌려주지 않고 실패하면 예외
      *
