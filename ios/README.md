@@ -45,7 +45,7 @@ open WeGo.xcodeproj                # 시뮬레이터(iPhone 17) 선택 후 ⌘R
 - 개인정보 매니페스트는 WeGo/PrivacyInfo.xcprivacy(앱)와 RideWidget/PrivacyInfo.xcprivacy(위젯)다. 수집 데이터 없음, UserDefaults만 사유(CA92.1)를 적었다. 새 Required Reason API(파일 시각, 부팅 시간, 디스크 용량 등)나 서버로 보내는 데이터를 추가하면 매니페스트와 App Store Connect 개인정보 라벨을 함께 고친다.
 - 수출 규정은 Info.plist의 ITSAppUsesNonExemptEncryption = NO로 답해 두었다(Apple HTTPS만 사용).
 - 개인정보 처리방침과 문의 페이지 주소는 WeGo/Core/AppLinks.swift에 있다. App Store Connect에 적는 주소와 같아야 하고, 심사 전에 열려 있어야 한다.
-- 1.0에서 숨긴 화면은 MainTab.available(저장 탭), CourseFilter.available(인기, 저장 코스), BikeOperator.available(타슈)로 다시 켠다.
+- 아직 숨긴 화면은 CourseFilter.available(인기 코스), BikeOperator.available(타슈)로 다시 켠다. 저장 탭과 저장 코스 칩은 1.1에서 켰다.
 
 ## 테스트
 

@@ -19,6 +19,14 @@ final class AppState {
     private(set) var ride: RideSession?
     /// 정류장 시트에서 "코스 선택하기"로 지정한 코스. 대여 후 출발하면 이 코스로 안내한다.
     var plannedCourse: Course?
+    /// 저장 탭의 "코스 보기"로 홈 정류장 시트에서 열어 달라고 한 코스(홈이 받아서 비운다)
+    var requestedCourse: Course?
+
+    /// 홈 탭으로 가서 코스의 출발 정류장 시트를 열고 그 코스를 고른다.
+    func showOnHome(_ course: Course) {
+        requestedCourse = course
+        selectedTab = .home
+    }
 
     @ObservationIgnored let location = LocationService()
     @ObservationIgnored private let rideActivity = RideActivityController()

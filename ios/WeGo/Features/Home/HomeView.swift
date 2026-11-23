@@ -24,11 +24,15 @@ struct HomeView: View {
     private var shareableRides: [RideRecord]
     /// 고른 정류장에서 출발한 내 기록을 코스로 만든 것. 경로 압축을 매번 풀지 않게 정류장·기록이 바뀔 때만 다시 만든다.
     @State private var myRideCourses: [Course] = []
+    /// 저장, 즐겨찾기한 코스(최근 표시한 순)
+    @Query(sort: \SavedCourse.markedAt, order: .reverse) private var savedCourses: [SavedCourse]
+    /// 저장 탭에서 요청한 코스. 정류장 시트가 열리면 첫 코스 대신 이 코스를 고른다.
+    @State private var pendingCourseID: Course.ID?
 
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
     @State private var selectedStationID: Station.ID?
     @State private var operatorFilter: BikeOperator?
-    /// 1.0은 인기/저장 코스가 없어서(서버 공유 경로 전) 내 기록이 나오는 최신 탭을 기본으로 연다.
+    /// 인기 코스는 서버 공유 경로가 생기기 전이라 숨겨 두고, 내 기록이 나오는 최신 탭을 기본으로 연다.
     @State private var courseFilter: CourseFilter = .recent
     @State private var selectedCourseID: Course.ID?
     @State private var detailCourseID: Course.ID?
@@ -66,8 +70,12 @@ struct HomeView: View {
         switch courseFilter {
         case .recent:
             return myRideCourses
-        case .popular, .saved:
-            // 인기(다른 사람의 공유 경로)와 저장은 서버 연동(1.1) 후에 채운다.
+        case .saved:
+            return savedCourses
+                .filter { $0.startStationID == selectedStation.id }
+                .map(\.course)
+        case .popular:
+            // 인기(다른 사람의 공유 경로)는 서버 연동 후에 채운다.
             return []
         }
     }
@@ -117,6 +125,16 @@ struct HomeView: View {
         .animation(.easeInOut(duration: 0.2), value: mapStations.isZoomedOutTooFar)
         .onAppear {
             appState.location.requestPermission()
+            openRequestedCourse()
+        }
+        .onChange(of: appState.requestedCourse?.id) { _, _ in
+            openRequestedCourse()
+        }
+        .onChange(of: savedCourses.map(\.courseID)) { _, _ in
+            // 저장 코스 칩에서 표시를 끄면 목록에서 빠지므로 선택을 다시 고른다.
+            if courseFilter == .saved, !stationCourses.contains(where: { $0.id == selectedCourseID }) {
+                selectFirstCourse()
+            }
         }
         .onChange(of: selectedStationID) { _, newID in
             sheetDetent = .standard
@@ -294,9 +312,34 @@ struct HomeView: View {
     }
 
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
+    /// 저장 탭에서 요청한 코스가 있으면 그 코스를 고른다.
     private func selectFirstCourse() {
-        selectedCourseID = stationCourses.first?.id
+        if let pendingCourseID, stationCourses.contains(where: { $0.id == pendingCourseID }) {
+            selectedCourseID = pendingCourseID
+            self.pendingCourseID = nil
+        } else {
+            selectedCourseID = stationCourses.first?.id
+        }
         detailCourseID = nil
+    }
+
+    /// 저장 탭의 "코스 보기": 코스의 출발 정류장 시트를 저장 코스 칩으로 열고 그 코스를 고른다.
+    private func openRequestedCourse() {
+        guard let course = appState.requestedCourse else { return }
+        appState.requestedCourse = nil
+        guard let stationID = course.startStationID, appState.stationRepository.station(id: stationID) != nil else { return }
+        pendingCourseID = course.id
+        courseFilter = .saved
+        if selectedStationID == stationID {
+            selectFirstCourse()
+        } else {
+            selectedStationID = stationID
+        }
+        // 탭을 막 바꿔 화면 크기를 아직 모를 수 있어 잠시 뒤 지도를 코스에 맞춘다.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            fitSelectedCourse()
+        }
     }
 
     /// 고른 카드를 이번 주행 코스로 지정하거나, 이미 지정돼 있으면 해제한다.

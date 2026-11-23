@@ -128,29 +128,6 @@ struct ProfileDivider: View {
     }
 }
 
-/// 디자인이 아직 없는 탭에 쓰는 임시 화면
-struct PlaceholderTabView: View {
-    let title: String
-    let message: String
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Text(title)
-                .wegoFont(.bold, 24)
-            Text(message)
-                .wegoFont(.regular, 14, lineHeight: 22)
-                .foregroundStyle(WeGoColor.gray500)
-                .multilineTextAlignment(.center)
-            Spacer()
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.ignoresSafeArea())
-    }
-}
-
 #Preview {
     NavigationStack { PolicyView() }
 }
