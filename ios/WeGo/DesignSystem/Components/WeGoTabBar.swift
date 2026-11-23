@@ -45,6 +45,9 @@ struct WeGoTabBar: View {
         VStack(spacing: 2) {
             Image(tab.iconName)
                 .renderingMode(.original)
+                .overlay(alignment: .topLeading) {
+                    if tab == .home { HomeIconDoor() }
+                }
                 .grayscale(isSelected ? 0 : 1)
                 .opacity(isSelected ? 1 : inactiveIconOpacity)
                 .frame(height: TabBarLayout.iconBoxHeight)
@@ -54,6 +57,18 @@ struct WeGoTabBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
+    }
+}
+
+/// 집 아이콘의 주황 문(Figma 430:1942 "Vector 3426", 집 그림 39x35 안 x 25.3, y 23.9, 4.3x6.6).
+/// 내보낸 집 그림에 문 레이어가 빠져 있어 코드로 얹는다. 비활성일 때는 집과 함께 회색이 된다.
+private struct HomeIconDoor: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+            .fill(WeGoColor.primary)
+            .frame(width: 4.3, height: 6.6)
+            .offset(x: 25.3, y: 23.9)
+            .accessibilityHidden(true)
     }
 }
 
