@@ -23,10 +23,11 @@ Copyright © 2026 WeGo 팀. All rights reserved.
 | `splashLogoKo`, `splashLogoWego` | 위고 손글씨 로고, WEGO 로고 |
 | `splashLine1`~`splashLine4`, `splashAccent1`~`splashAccent3` | 스플래시 장식 선 |
 | AppIcon (AppIcon.appiconset 폴더) | 앱 아이콘(흰 배경 오리) |
+| `tabRide`, `tabProfile` | 탭바 아이콘(자전거 탄 오리, 헬멧 쓴 오리 얼굴) |
 
 ## 대상이 아닌 파일
 
 - **소스 코드**: 이 고지의 대상이 아닙니다. 코드 라이선스는 저장소 루트 README를 따릅니다.
 - **Pretendard 폰트** (`WeGo/Resources/Fonts/`): 길형진 님의 SIL Open Font License 1.1 저작물입니다. 같은 폴더의 `OFL.txt`를 따릅니다.
 - **Google·Apple 로고** (`iconGoogle`, `iconApple`): 각 회사의 상표입니다. 각 회사의 브랜드 가이드라인을 따릅니다.
-- 위 표에 없는 나머지 에셋(탭 아이콘 `tabHome`·`tabCourse`·`tabRide`·`tabProfile`, 진행 방향 화살표 `headingArrow`, 일시정지 아이콘 `rideSideButtonIcon`, 지도·핀 아이콘 등): 출처를 확인한 뒤 이 문서에 분류합니다.
+- 위 표에 없는 나머지 에셋(탭 아이콘 `tabHome`·`tabCourse`, 진행 방향 화살표 `headingArrow`, 일시정지 아이콘 `rideSideButtonIcon`, 지도·핀 아이콘 등): 출처를 확인한 뒤 이 문서에 분류합니다.

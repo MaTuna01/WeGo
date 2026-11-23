@@ -3,14 +3,15 @@ import SwiftUI
 /// 하단 탭바(Figma wireframe 430:1942 등 모든 탭 화면): 화면 폭 전체 흰 바, 위쪽 모서리만 둥글고,
 /// 아이콘 아래에 글자 라벨(홈 / 저장 / 라이딩 / MY)을 둔다.
 ///
-/// 아이콘은 단색 PNG를 템플릿으로 칠하고, 비활성 탭은 같은 아이콘을 옅게 칠한다.
-/// 디자인의 새 아이콘(주황 문이 있는 집, 오리 얼굴 MY 등)을 받으면 그림만 바꾼다.
+/// 아이콘은 디자인의 활성 상태 그림(색 포함)을 그대로 쓰고, 비활성 탭은 같은 그림을 회색으로 옅게 보여 준다.
 struct WeGoTabBar: View {
     @Binding var selection: MainTab
     /// 화면 아래 안전 영역(홈 인디케이터). 바 배경은 화면 끝까지 칠하고 내용은 그 위에 둔다.
     var bottomInset: CGFloat = 0
 
-    private let inactiveColor = WeGoColor.gray300
+    private let inactiveLabelColor = WeGoColor.gray300
+    /// 비활성 아이콘 투명도(디자인의 옅은 회색 아이콘에 맞춤)
+    private let inactiveIconOpacity = 0.25
 
     var body: some View {
         HStack(spacing: 0) {
@@ -42,14 +43,15 @@ struct WeGoTabBar: View {
 
     private func item(_ tab: MainTab, isSelected: Bool) -> some View {
         VStack(spacing: 2) {
-            // 그림마다 투명 여백이 달라 원래 크기 그대로 두고, 칸 밖으로 넘치는 여백은 겹치게 둔다.
             Image(tab.iconName)
-                .renderingMode(.template)
+                .renderingMode(.original)
+                .grayscale(isSelected ? 0 : 1)
+                .opacity(isSelected ? 1 : inactiveIconOpacity)
                 .frame(height: TabBarLayout.iconBoxHeight)
             Text(tab.title)
                 .wegoFont(.medium, 12, tracking: -0.3)
+                .foregroundStyle(isSelected ? Color.black : inactiveLabelColor)
         }
-        .foregroundStyle(isSelected ? Color.black : inactiveColor)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
     }
@@ -70,7 +72,7 @@ extension EnvironmentValues {
 }
 
 private extension MainTab {
-    /// 탭 아이콘(홈, 책, 자전거, 사람)
+    /// 탭 아이콘(집, 책갈피, 자전거 탄 오리, 헬멧 쓴 오리 얼굴)
     var iconName: String {
         switch self {
         case .home: "tabHome"
