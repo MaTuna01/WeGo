@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// 코스 상세 (Figma 299:224). 정류장 시트 안에서 코스 카드의 `>`로 들어온다.
+/// 코스 상세 (Figma 299:224). 정류장 시트에서 선택된 코스 카드를 한 번 더 누르면 들어온다.
 /// 위에서부터: 출발 → 도착 카드(왼쪽 위 뒤로가기), 경사도, 코스 정보, 사용자 후기.
-/// 하단 "코스 선택하기 / 대여하러 가기" 버튼은 정류장 시트가 목록과 같이 붙여 준다.
+/// 하단 "코스 선택 / 대여하기" 버튼은 정류장 시트가 목록과 같이 붙여 준다.
 struct CourseDetailView: View {
     let course: Course
     let startName: String
@@ -26,7 +26,7 @@ struct CourseDetailView: View {
     /// 출발 → 도착 카드, 경사도 카드(그래프 + 코스 정보), 후기 제목
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CourseRow(course: course, startName: startName, endName: endName)
+            CourseRouteCard(course: course, startName: startName, endName: endName)
                 .overlay(alignment: .topLeading) { backButton }
 
             sectionTitle("경사도")
