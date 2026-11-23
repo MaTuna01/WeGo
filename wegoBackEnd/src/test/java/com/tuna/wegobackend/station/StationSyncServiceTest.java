@@ -83,7 +83,7 @@ class StationSyncServiceTest {
         var removed = sync(BikeOperator.TTAREUNGYI, List.of(seoul("ST-1", "A")), T1);
         assertThat(removed).isEqualTo(new StationSyncService.Result(0, 0, 1, 1));
         assertThat(find("ST-2").getRemovedAt()).isEqualTo(T1);
-        assertThat(repository.findByRemovedAtIsNull()).extracting(StationEntity::getId).containsExactly("ST-1");
+        assertThat(repository.findActiveStations()).extracting(Station::id).containsExactly("ST-1");
 
         var back = sync(BikeOperator.TTAREUNGYI, List.of(seoul("ST-1", "A"), seoul("ST-2", "B")), T2);
         assertThat(back).isEqualTo(new StationSyncService.Result(0, 1, 0, 1));

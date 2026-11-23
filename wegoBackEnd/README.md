@@ -1,13 +1,13 @@
 # WeGo 서버
 
-앱이 쓰는 API 두 개만 제공한다. 메모리에 따릉이 정류장 목록을 두고, 6시간마다 서울시 공공자전거 API에서 갱신한다. API 모양은 저장소 루트의 docs/api-contract.md를 따른다.
+앱이 쓰는 API 두 개만 제공한다. 6시간마다 서울시 공공자전거 API에서 따릉이 정류장을 받아 DB(stations 테이블)에 반영하고, GET /stations는 요청마다 DB의 활성 정류장을 읽어 응답한다(캐시 없음). 서버를 다시 켜도 운영사 API와 상관없이 마지막 목록으로 응답한다. API 모양은 저장소 루트의 docs/api-contract.md를 따른다.
 
-1.2부터 PostgreSQL(PostGIS)을 함께 띄운다. 스키마는 Flyway가 서버 시작 때 바꾼다(src/main/resources/db/migration). 아직 테이블은 없고 PostGIS 확장만 켠 상태다.
+DB는 PostgreSQL(PostGIS)이다. 스키마는 Flyway가 서버 시작 때 바꾼다(src/main/resources/db/migration). 정류장 좌표는 geography 컬럼과 GiST 인덱스로 저장한다. 운영사 목록에서 빠진 정류장은 지우지 않고 removed_at만 표시한다.
 
 | 경로 | 설명 |
 |---|---|
 | GET /app/config | 최소 지원 앱 버전 |
-| GET /stations | 따릉이 정류장 목록(약한 ETag, 304, gzip). 아직 못 받았으면 503 |
+| GET /stations | 따릉이 정류장 목록(약한 ETag, 304, gzip). DB에 정류장이 아직 없으면 503 |
 | GET /actuator/health | 헬스 체크 |
 
 나머지 경로는 모두 403이다. 요청마다 X-App-Version을 로그에 남긴다.
@@ -26,7 +26,7 @@
 
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---|---|---|
-| SEOUL_OPEN_API_KEY | 예 | 없음 | 서울 열린데이터광장 공공자전거 실시간 대여정보 인증키. 없으면 수집하지 않고 GET /stations가 503 |
+| SEOUL_OPEN_API_KEY | 예 | 없음 | 서울 열린데이터광장 공공자전거 실시간 대여정보 인증키. 없으면 수집하지 않음(DB에 이전 목록이 있으면 GET /stations는 그 목록으로 응답) |
 | WEGO_MINIMUM_VERSION | 아니오 | 1.0.0 | 최소 지원 앱 버전. 올리면 이보다 낮은 앱은 업데이트 안내로 막힌다 |
 | SERVER_PORT | 아니오 | 8080 | 서버 포트(Docker 배포에서는 8080 고정) |
 | POSTGRES_DB | 예 | wego | DB 이름. 배포에서는 db 컨테이너가 처음 시작할 때 이 이름으로 DB를 만든다 |
@@ -56,7 +56,7 @@ Spring Boot는 .env를 직접 읽지 않는다. IntelliJ에서는 EnvFile 플러
 
     set -a; . ./.env; set +a; ./gradlew bootRun
 
-시작 로그에 "정류장 N곳 갱신"이 나오면 정상이다.
+시작 로그에 "ttareungyi 정류장 N곳 반영"이 나오면 정상이다.
 
 ## 배포 (VM 한 대, Docker)
 

@@ -11,7 +11,7 @@ spring:
     username: ${POSTGRES_USER:wego}
     password: ${POSTGRES_PASSWORD:}
     hikari:
-      # 요청 대부분이 메모리 응답이라 연결은 적게 둠(VM 메모리 2GB)
+      # 요청이 많지 않고 쿼리가 짧아 연결은 적게 둠(VM 메모리 2GB)
       maximum-pool-size: 5
   jpa:
     # 스키마는 Flyway만 바꿈. Hibernate는 엔티티와 테이블이 맞는지만 확인

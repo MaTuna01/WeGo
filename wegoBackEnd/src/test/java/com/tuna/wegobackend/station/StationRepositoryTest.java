@@ -66,7 +66,7 @@ class StationRepositoryTest {
     }
 
     @Test
-    @DisplayName("운영사별 조회와 활성 정류장 조회")
+    @DisplayName("운영사별 조회와 활성 정류장 조회(응답 모델로)")
     void findsByOperatorAndActive() {
         var removed = entity("ST-2", BikeOperator.TTAREUNGYI, "ST-2");
         removed.markRemoved(NOW);
@@ -75,7 +75,7 @@ class StationRepositoryTest {
 
         assertThat(repository.findByOperator(BikeOperator.TTAREUNGYI))
                 .extracting(StationEntity::getId).containsExactlyInAnyOrder("ST-1", "ST-2");
-        assertThat(repository.findByRemovedAtIsNull())
-                .extracting(StationEntity::getId).containsExactlyInAnyOrder("ST-1", "TS-1");
+        assertThat(repository.findActiveStations())
+                .extracting(Station::id).containsExactlyInAnyOrder("ST-1", "TS-1");
     }
 }
