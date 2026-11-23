@@ -192,7 +192,7 @@ enum TrackCodec {
     }
 }
 
-/// 주행 기록 저장소. 앱 전체에서 하나의 ModelContainer를 쓴다.
+/// 주행 기록 저장소. 앱 전체에서 하나의 ModelContainer를 쓴다(저장한 코스 SavedCourse도 같은 저장소).
 /// AppState처럼 메인 스레드(화면 동작)에서만 부른다. 화면의 `@Query`와 같은 메인 컨텍스트에 써서 저장하면 바로 반영되게 한다.
 final class RideRecordStore {
     let container: ModelContainer
@@ -201,13 +201,13 @@ final class RideRecordStore {
 
     init() {
         do {
-            container = try ModelContainer(for: RideRecord.self)
+            container = try ModelContainer(for: RideRecord.self, SavedCourse.self)
         } catch {
             // 저장소를 못 열어도 앱은 돌아가게 메모리 저장소로 대신한다(이번 실행 동안만 남음).
             Logger(subsystem: "com.matuna01.wego", category: "RideRecord")
                 .error("기록 저장소 열기 실패, 메모리로 대체: \(error.localizedDescription, privacy: .public)")
             container = try! ModelContainer(
-                for: RideRecord.self,
+                for: RideRecord.self, SavedCourse.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }

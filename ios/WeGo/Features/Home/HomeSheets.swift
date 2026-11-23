@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// 정류장 선택 전 홈 시트 (Figma 299:58): 나의 이용 기록. 끌어서 높이를 바꾼다.
@@ -63,6 +64,9 @@ struct HomeSheet: View {
 /// 기획상 필요한 "잔여 대수(참고)"는 시안에 자리가 없어 아직 넣지 않았다 — 디자이너와 위치 결정 필요.
 struct StationSheet: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
+    /// 저장, 즐겨찾기 표시(카드 배지)
+    @Query private var savedCourses: [SavedCourse]
     let station: Station
     @Binding var filter: CourseFilter
     let courses: [Course]
@@ -163,7 +167,9 @@ struct StationSheet: View {
                             onDetail: {
                                 selectedCourseID = course.id
                                 detailCourseID = course.id
-                            }
+                            },
+                            marks: marks(for: course.id),
+                            onToggleMark: { mark in toggle(mark, for: course) }
                         )
                         .onTapGesture { tapCourse(course.id) }
                     }
@@ -179,8 +185,23 @@ struct StationSheet: View {
         switch filter {
         case .recent: "이 정류장에서 출발한 내 기록이 아직 없어요.\n정류장에서 정류장까지 달리면 여기에 쌓여요."
         case .popular: "인기 코스는 준비 중이에요."
-        case .saved: "코스 저장은 준비 중이에요."
+        case .saved: "이 정류장에서 출발하는 저장한 코스가 없어요.\n코스 카드의 북마크나 별을 눌러 저장해 보세요."
         }
+    }
+
+    private func marks(for courseID: Course.ID) -> Set<CourseMark> {
+        guard let saved = savedCourses.first(where: { $0.courseID == courseID }) else { return [] }
+        return Set(CourseMark.allCases.filter { saved.has($0) })
+    }
+
+    private func toggle(_ mark: CourseMark, for course: Course) {
+        SavedCourse.toggle(
+            mark,
+            for: course,
+            startStationName: startName(of: course),
+            endStationName: endName(of: course),
+            in: modelContext
+        )
     }
 
     /// 처음 누르면 선택(지도에 경로), 이미 선택된 카드를 다시 누르면 코스 상세로 간다.
