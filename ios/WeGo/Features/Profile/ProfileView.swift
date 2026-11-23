@@ -3,6 +3,7 @@ import SwiftUI
 /// 내 정보 (디자인 없음). 1.0은 로그인이 없어서 앱 정보, 지원, 고지 항목만 둔다.
 /// 로그인/로그아웃은 서버 연동(1.1) 때 맨 위에 넣는다.
 struct ProfileView: View {
+    @Environment(\.tabBarHeight) private var tabBarHeight
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -46,7 +47,7 @@ struct ProfileView: View {
                         .foregroundStyle(WeGoColor.gray500)
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, ProfileLayout.tabBarReserve)
+                .padding(.bottom, tabBarHeight + 24)
             }
             .background(Color.white.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
@@ -59,11 +60,6 @@ extension ProfileView {
     static var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
     }
-}
-
-enum ProfileLayout {
-    /// 화면 아래에 떠 있는 탭바(높이 58, 아래 여백 23)에 마지막 줄이 가리지 않게 비워 두는 높이
-    static let tabBarReserve: CGFloat = 24 + 58 + 23
 }
 
 private struct ProfileSection<Content: View>: View {

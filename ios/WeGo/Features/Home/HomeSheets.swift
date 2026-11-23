@@ -3,6 +3,7 @@ import SwiftUI
 /// 정류장 선택 전 홈 시트 (Figma 299:58): 나의 이용 기록. 끌어서 높이를 바꾼다.
 /// 디자인의 "많이 찾는 코스"는 다른 사람의 공유 경로가 필요해서 서버 연동(1.1) 때 다시 넣는다.
 struct HomeSheet: View {
+    @Environment(\.tabBarHeight) private var tabBarHeight
     /// 최근 주행 기록(최대 3개, 최신순)
     let myRides: [RideRecord]
     @Binding var detent: SheetDetent
@@ -23,7 +24,7 @@ struct HomeSheet: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 120) // 플로팅 탭바에 가리지 않게
+                .padding(.bottom, tabBarHeight + 24) // 탭바에 가리지 않게
             }
         }
     }
@@ -76,8 +77,9 @@ struct StationSheet: View {
     @Binding var detent: SheetDetent
     let heights: (CGFloat) -> SheetHeights
 
-    /// 하단 버튼 아래로 플로팅 탭바(58)와 여백(위 24, 아래 23)이 들어갈 자리
-    private let tabBarReserve: CGFloat = 24 + 58 + 23
+    @Environment(\.tabBarHeight) private var tabBarHeight
+    /// 하단 버튼과 탭바 사이 여백
+    static let buttonBottomGap: CGFloat = 16
 
     var body: some View {
         // 하단 버튼은 어느 높이에서든 보여야 해서, 접힐 때는 위쪽 목록·상세만 흐리게 하고 줄여서 가린다.
@@ -104,7 +106,7 @@ struct StationSheet: View {
                 buttons
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, tabBarReserve)
+                    .padding(.bottom, Self.buttonBottomGap + tabBarHeight)
             }
         }
     }

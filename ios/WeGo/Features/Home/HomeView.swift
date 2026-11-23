@@ -8,6 +8,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openURL) private var openURL
+    @Environment(\.tabBarHeight) private var tabBarHeight
 
     /// 홈 "나의 이용 기록": 최근 주행 3개
     @Query(HomeView.recentRidesDescriptor) private var recentRides: [RideRecord]
@@ -187,26 +188,28 @@ struct HomeView: View {
         }
     }
 
-    /// 접힘: 플로팅 탭바(아래 여백 23 + 높이 58) 위로 손잡이만 보이게
-    private static let collapsedSheetHeight: CGFloat = 23 + 58 + 24
+    /// 접힘: 탭바 위로 손잡이만 보이게
+    private var collapsedSheetHeight: CGFloat { tabBarHeight + 24 }
 
     /// 홈 시트: 기본은 Figma 높이 372pt(299:58, 위에서 502pt부터)
     private func homeSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
         SheetHeights(
-            collapsed: Self.collapsedSheetHeight,
+            collapsed: collapsedSheetHeight,
             standard: 372,
             expanded: expandedSheetHeight(containerHeight)
         )
     }
 
-    /// 정류장 시트 접힘: 손잡이(위 13 + 5) + 버튼 위 여백 12 + 버튼 52 + 탭바 자리(24 + 58 + 23).
+    /// 정류장 시트 접힘: 손잡이(위 13 + 5) + 버튼 위 여백 12 + 버튼 52 + 버튼 아래 여백 + 탭바.
     /// 하단 버튼은 어느 높이에서든 보여야 해서 홈 시트보다 높다.
-    private static let stationCollapsedSheetHeight: CGFloat = 13 + 5 + 12 + 52 + 24 + 58 + 23
+    private var stationCollapsedSheetHeight: CGFloat {
+        13 + 5 + 12 + 52 + StationSheet.buttonBottomGap + tabBarHeight
+    }
 
     /// 정류장·코스 상세 시트: 기본은 Figma 299:121·299:224처럼 화면 위에서 365pt(874pt 기준)부터
     private func stationSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
         SheetHeights(
-            collapsed: Self.stationCollapsedSheetHeight,
+            collapsed: stationCollapsedSheetHeight,
             standard: screenHeight(containerHeight) * (874 - 365) / 874,
             expanded: expandedSheetHeight(containerHeight)
         )

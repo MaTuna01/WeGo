@@ -3,6 +3,7 @@ import SwiftUI
 /// 오픈소스 라이선스 고지. 1.0이 쓰는 외부 자산은 Pretendard 글꼴뿐이다(외부 패키지 없음).
 /// SIL OFL은 글꼴과 함께 라이선스 전문을 배포하도록 요구하므로 앱 번들의 OFL.txt를 그대로 보여준다.
 struct LicensesView: View {
+    @Environment(\.tabBarHeight) private var tabBarHeight
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
@@ -23,7 +24,7 @@ struct LicensesView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
-            .padding(.bottom, ProfileLayout.tabBarReserve)
+            .padding(.bottom, tabBarHeight + 24)
         }
         .background(Color.white.ignoresSafeArea())
         .navigationTitle("오픈소스 라이선스")
