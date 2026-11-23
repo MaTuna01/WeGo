@@ -41,6 +41,8 @@ final class RideRecord {
     var sharedLengthMeters: Double = 0
     /// 정류장별로 공유할 수 있는 기록인지. 실제 공유는 주행 요약 화면에서 사용자가 고른다(기본 비공개).
     var isShareable: Bool = false
+    /// 대여한 시간권(시간 단위, 1 또는 2). 1.1에서 추가해 그 전 기록은 1시간권으로 본다.
+    var passHours: Int = 1
 
     init(
         id: UUID = UUID(),
@@ -55,7 +57,8 @@ final class RideRecord {
         ridingSeconds: Double,
         rentalSeconds: Double,
         trackPoints: [TrackPoint],
-        segmentStarts: [Int] = []
+        segmentStarts: [Int] = [],
+        pass: TimePass = .oneHour
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -71,6 +74,7 @@ final class RideRecord {
         self.pointCount = trackPoints.count
         self.trackData = TrackCodec.encode(trackPoints)
         self.segmentStarts = segmentStarts
+        self.passHours = pass == .twoHours ? 2 : 1
     }
 
     /// 저장된 경로 점. 압축을 풀어야 해서 목록 화면처럼 자주 그리는 곳에서는 부르지 않는다.
@@ -115,7 +119,8 @@ extension RideRecord {
             ridingSeconds: session.ridingElapsed(at: endedAt),
             rentalSeconds: session.rentalElapsed(at: endedAt),
             trackPoints: session.trackPoints,
-            segmentStarts: session.segmentStarts
+            segmentStarts: session.segmentStarts,
+            pass: session.pass
         )
         applyMatch(
             StationMatcher.match(
@@ -125,6 +130,23 @@ extension RideRecord {
             ),
             stations: stations
         )
+    }
+}
+
+/// 마이페이지 이용 내역(Figma 337:1064)에 쓰는 값
+extension RideRecord {
+    var pass: TimePass {
+        passHours >= 2 ? .twoHours : .oneHour
+    }
+
+    /// 대여 시간이 시간권을 넘었는지. 정확한 요금은 운영사만 알 수 있어 금액 대신 추가요금 발생 여부만 보여 준다.
+    var hasExtraFee: Bool {
+        rentalSeconds > pass.duration
+    }
+
+    /// 이용 내역 줄 제목: 도착 정류장, 도착이 판정되지 않았으면 "출발 정류장 출발"
+    var historyTitle: String {
+        endStationName ?? "\(matchedStartStationName ?? startStationName) 출발"
     }
 }
 
