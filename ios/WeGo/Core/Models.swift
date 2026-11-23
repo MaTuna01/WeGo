@@ -155,7 +155,7 @@ enum MainTab: CaseIterable, Hashable {
         case .home: "홈"
         case .saved: "저장"
         case .ride: "라이딩"
-        case .profile: "내 정보"
+        case .profile: "MY"
         }
     }
 
