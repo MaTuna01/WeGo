@@ -42,6 +42,8 @@ struct HomeView: View {
     @State private var containerFrame: CGRect = .zero
     /// 지도에 보이는 영역. 첫 카메라 이동 전에는 기본 위치로 본다.
     @State private var mapRegion: MKCoordinateRegion = MockData.defaultRegion
+    /// 끄는 중까지 포함한 지금 시트 높이(지도 버튼이 시트 바로 위를 따라간다)
+    @State private var sheetHeight: CGFloat = 0
 
     /// 운영사 칩으로 거른 전체 정류장
     private var filteredStations: [Station] {
@@ -97,18 +99,20 @@ struct HomeView: View {
                 title: selectedStation?.name,
                 operatorFilter: $operatorFilter,
                 onClear: { selectedStationID = nil },
-                onRecenter: {
-                    withAnimation { camera = .userLocation(fallback: .region(MockData.defaultRegion)) }
-                }
+                onRecenter: recenter
             )
             .padding(.horizontal, 20)
             .padding(.top, 8)
             .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: { topBarBottom = $0 }
         }
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { containerFrame = $0 }
+        .overlay(alignment: .bottomTrailing) {
+            mapControls
+        }
         .overlay(alignment: .bottom) {
             sheet
         }
+        .onPreferenceChange(BottomSheetHeightKey.self) { sheetHeight = $0 }
         .animation(.spring(duration: 0.3), value: selectedStationID)
         .animation(.easeInOut(duration: 0.2), value: mapStations.isZoomedOutTooFar)
         .onAppear {
@@ -160,6 +164,46 @@ struct HomeView: View {
         } message: { station in
             Text(departMessage(for: station))
         }
+    }
+
+    /// 오른쪽 지도 버튼(Figma 430:1942). 시트 위 16pt를 따라다니고, 시트를 펼쳐 지도가 좁아지면 숨긴다.
+    private var mapControls: some View {
+        let mapVisibleHeight = containerFrame.height - sheetHeight - (topBarBottom - containerFrame.minY)
+        let isVisible = sheetHeight > 0 && mapVisibleHeight > Self.mapControlsMinimumSpace
+        return MapControls(
+            onZoomIn: { zoom(by: 0.5) },
+            onZoomOut: { zoom(by: 2) },
+            onRecenter: recenter
+        )
+        .padding(.trailing, 16)
+        .padding(.bottom, sheetHeight + 16)
+        .opacity(isVisible ? 1 : 0)
+        .allowsHitTesting(isVisible)
+        .animation(.easeInOut(duration: 0.15), value: isVisible)
+    }
+
+    /// 지도 버튼(높이 약 117)과 위아래 여백이 들어갈 만큼 지도가 보여야 버튼을 보여 준다.
+    private static let mapControlsMinimumSpace: CGFloat = 160
+
+    private func zoom(by factor: Double) {
+        withAnimation { camera = .region(MapZoom.region(mapRegion, scaledBy: factor)) }
+    }
+
+    /// 내 위치를 시트와 상단 바에 가리지 않는 지도 영역의 가운데로 옮긴다(확대 정도는 그대로).
+    /// 위치를 아직 모르면(권한 거부 등) 지도가 알아서 내 위치를 찾거나 기본 위치를 보여 준다.
+    private func recenter() {
+        let mapHeight = containerFrame.maxY
+        guard let coordinate = appState.location.lastLocation?.coordinate, mapHeight > 0 else {
+            withAnimation { camera = .userLocation(fallback: .region(MockData.defaultRegion)) }
+            return
+        }
+        let region = MapZoom.region(
+            centering: coordinate,
+            span: mapRegion.span,
+            visibleTop: topBarBottom / mapHeight,
+            visibleBottom: (mapHeight - sheetHeight) / mapHeight
+        )
+        withAnimation { camera = .region(region) }
     }
 
     @ViewBuilder

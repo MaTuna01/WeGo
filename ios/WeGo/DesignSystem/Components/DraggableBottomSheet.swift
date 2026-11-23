@@ -23,6 +23,14 @@ enum SheetDetent: Int, CaseIterable, Comparable {
     }
 }
 
+/// 끄는 동안까지 포함한 지금 시트 높이. 시트 바로 위를 따라다녀야 하는 버튼(홈 지도 버튼 등)이 읽는다.
+struct BottomSheetHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 /// 단계별 시트 높이(시트를 담은 영역 아래끝에서 시트 윗변까지, pt)
 struct SheetHeights {
     var collapsed: CGFloat
@@ -84,6 +92,7 @@ struct DraggableBottomSheet<Content: View>: View {
                     .environment(\.sheetContentOpacity, opacity)
             }
             .frame(height: height)
+            .preference(key: BottomSheetHeightKey.self, value: height)
             .overlay(alignment: .top) { handleAccessibility }
             .simultaneousGesture(dragGesture(heights))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

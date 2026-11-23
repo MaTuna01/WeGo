@@ -103,49 +103,6 @@ private enum HeadingArrow {
     }()
 }
 
-/// 왼쪽 지도 버튼: 확대/축소(36×72)와 현재 위치로 이동(36) (Figma 299:352~358)
-struct RideMapControls: View {
-    let onZoomIn: () -> Void
-    let onZoomOut: () -> Void
-    let onRecenter: () -> Void
-
-    var body: some View {
-        VStack(spacing: 9) {
-            VStack(spacing: 0) {
-                controlButton(systemName: "plus", label: "지도 확대", action: onZoomIn)
-                Rectangle()
-                    .fill(WeGoColor.border)
-                    .frame(width: 36, height: 1)
-                controlButton(systemName: "minus", label: "지도 축소", action: onZoomOut)
-            }
-            .background(.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            Button(action: onRecenter) {
-                Image(systemName: "scope")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(.black)
-                    .frame(width: 36, height: 36)
-                    .background(.white, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("현재 위치로 이동")
-        }
-        .shadow(color: .black.opacity(0.12), radius: 4, y: 1)
-    }
-
-    private func controlButton(systemName: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.black)
-                .frame(width: 36, height: 35)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-}
-
 /// 오른쪽 원형 일시정지 버튼(60, Figma 299:397·398). 멈춘 동안은 다시 시작 아이콘
 struct RidePauseButton: View {
     let isPaused: Bool
