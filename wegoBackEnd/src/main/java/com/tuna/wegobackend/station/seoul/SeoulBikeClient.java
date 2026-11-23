@@ -9,8 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -25,10 +24,9 @@ import tools.jackson.databind.json.JsonMapper;
  * - 인증키가 URL 경로에 들어가므로 예외 메시지, 로그에 URL을 남기지 않음
  * - 응답 Content-Type이 JSON이 아닐 수 있어 문자열로 받아 직접 파싱
  */
+@Slf4j
 @Component
 public class SeoulBikeClient implements StationSource {
-
-    private static final Logger log = LoggerFactory.getLogger(SeoulBikeClient.class);
 
     private final RestClient restClient;
     private final SeoulBikeProperties properties;

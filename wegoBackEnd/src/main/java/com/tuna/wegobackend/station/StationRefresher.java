@@ -8,8 +8,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,10 +21,9 @@ import org.springframework.stereotype.Component;
  * - 한 번도 받지 못한 운영사만 retry-interval(기본 1분)마다 다시 시도
  * - 인증키가 없는 운영사는 건너뜀(모든 운영사가 한 번도 못 받았으면 GET /stations는 503)
  */
+@Slf4j
 @Component
 public class StationRefresher {
-
-    private static final Logger log = LoggerFactory.getLogger(StationRefresher.class);
 
     private final List<StationSource> sources;
     private final StationStore store;

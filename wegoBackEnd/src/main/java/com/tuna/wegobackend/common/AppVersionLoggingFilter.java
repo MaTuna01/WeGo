@@ -6,8 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -19,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * 값은 MDC(appVersion)에 넣어 같은 요청의 모든 로그 줄에 찍히게 하고, 요청마다 한 줄 접근 로그를 남긴다.
  * 보안 필터보다 먼저 돌아서 막힌 요청도 기록한다.
  */
+@Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class AppVersionLoggingFilter extends OncePerRequestFilter {
@@ -32,7 +32,6 @@ public class AppVersionLoggingFilter extends OncePerRequestFilter {
     static final String INVALID = "invalid";
 
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z.+-]{1,20}");
-    private static final Logger log = LoggerFactory.getLogger(AppVersionLoggingFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
