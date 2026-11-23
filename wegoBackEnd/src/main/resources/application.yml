@@ -11,13 +11,19 @@ spring:
     username: ${POSTGRES_USER:wego}
     password: ${POSTGRES_PASSWORD:}
     hikari:
-      # 요청 대부분이 메모리 응답이라 연결은 적게 둠(VM 메모리 2GB)
+      # 요청이 많지 않고 쿼리가 짧아 연결은 적게 둠(VM 메모리 2GB)
       maximum-pool-size: 5
   jpa:
     # 스키마는 Flyway만 바꿈. Hibernate는 엔티티와 테이블이 맞는지만 확인
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        # 정류장 갱신 때 수천 행을 저장하므로 INSERT, UPDATE를 묶어서 보냄
+        jdbc.batch_size: 100
+        order_inserts: true
+        order_updates: true
   flyway:
     # 마이그레이션 파일 위치: src/main/resources/db/migration (V1__설명.sql)
     locations: classpath:db/migration

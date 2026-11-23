@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.tuna.wegobackend.TestcontainersConfiguration;
 import java.time.Instant;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,19 +28,23 @@ class StationControllerTest {
     MockMvc mockMvc;
 
     @Autowired
-    StationStore store;
+    StationRepository repository;
+
+    @Autowired
+    StationListService stationListService;
 
     @BeforeEach
     void reset() {
-        store.clear();
+        repository.deleteAll();
     }
 
+    /** DB에 두 곳을 넣고 그때의 ETag를 돌려줌 */
     private String loadStations() {
-        store.replace(List.of(
-                new Station("ST-4", "102. 망원역 1번출구 앞", BikeOperator.TTAREUNGYI, 37.5556488, 126.91062927, 15),
-                new Station("ST-5", "103. 망원역 2번출구 앞", BikeOperator.TTAREUNGYI, 37.5554, 126.9104, null)
-        ), Instant.EPOCH);
-        return store.current().orElseThrow().etag();
+        repository.save(StationEntity.firstSeen(
+                new Station("ST-5", "103. 망원역 2번출구 앞", BikeOperator.TTAREUNGYI, 37.5554, 126.9104, null), "ST-5", Instant.EPOCH));
+        repository.save(StationEntity.firstSeen(
+                new Station("ST-4", "102. 망원역 1번출구 앞", BikeOperator.TTAREUNGYI, 37.5556488, 126.91062927, 15), "ST-4", Instant.EPOCH));
+        return stationListService.current().orElseThrow().etag();
     }
 
     @Test
@@ -72,6 +75,18 @@ class StationControllerTest {
                 .andExpect(jsonPath("$.stations[0].longitude").value(126.91062927))
                 .andExpect(jsonPath("$.stations[0].dockCount").value(15))
                 .andExpect(jsonPath("$.stations[1].dockCount").isEmpty());
+    }
+
+    @Test
+    @DisplayName("DB가 바뀌면 다음 요청부터 새 ETag와 본문을 준다")
+    void reflectsDbChanges() throws Exception {
+        String before = loadStations();
+        repository.save(StationEntity.firstSeen(
+                new Station("ST-6", "104. 망원역 3번출구 앞", BikeOperator.TTAREUNGYI, 37.5550, 126.9100, 10), "ST-6", Instant.EPOCH));
+
+        mockMvc.perform(get("/stations").header("If-None-Match", before))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stations.length()").value(3));
     }
 
     @Test

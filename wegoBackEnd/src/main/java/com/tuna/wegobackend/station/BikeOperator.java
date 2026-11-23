@@ -20,4 +20,14 @@ public enum BikeOperator {
     public String code() {
         return code;
     }
+
+    /** 코드로 찾음(DB 값 읽기). 모르는 코드면 예외 */
+    public static BikeOperator fromCode(String code) {
+        for (BikeOperator operator : values()) {
+            if (operator.code.equals(code)) {
+                return operator;
+            }
+        }
+        throw new IllegalArgumentException("알 수 없는 운영사 코드: " + code);
+    }
 }

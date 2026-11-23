@@ -10,22 +10,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * GET /stations(docs/api-contract.md)
- * - 200: 미리 만들어 둔 본문과 ETag
+ * - 200: DB의 활성 정류장 목록과 ETag
  * - 304: If-None-Match가 지금 ETag와 같으면 본문 없이
- * - 503: 아직 한 번도 받지 못함
+ * - 503: 아직 한 번도 받지 못함(활성 정류장 없음)
  */
 @RestController
 public class StationController {
 
-    private final StationStore store;
+    private final StationListService stationListService;
 
-    public StationController(StationStore store) {
-        this.store = store;
+    public StationController(StationListService stationListService) {
+        this.stationListService = stationListService;
     }
 
     @GetMapping("/stations")
     public ResponseEntity<byte[]> stations(@RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch) {
-        StationStore.Snapshot snapshot = store.current().orElseThrow(StationsNotReadyException::new);
+        StationListService.StationList snapshot = stationListService.current().orElseThrow(StationsNotReadyException::new);
         // 앱이 ETag로 매번 확인하므로 중간 캐시는 저장해도 되지만 꼭 다시 확인하게 함
         CacheControl cacheControl = CacheControl.noCache();
 
