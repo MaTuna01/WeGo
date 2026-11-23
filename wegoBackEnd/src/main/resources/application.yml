@@ -2,14 +2,25 @@ spring:
   application:
     name: wegoBackEnd
   autoconfigure:
-    # 1.0 최소 서버는 DB를 쓰지 않음(정류장 목록은 메모리). 의존성은 1.1(로그인, 기록 업로드) 대비로 남김.
-    # 로그인이 없으므로 기본 사용자(임시 비밀번호)도 만들지 않음
+    # 로그인이 없으므로 기본 사용자(임시 비밀번호)는 만들지 않음
     exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
-      - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
-      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
       - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  datasource:
+    # PostgreSQL(PostGIS). 접속 정보는 .env에만 둠(배포는 docker-compose가 DB_HOST=db로 덮어씀)
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:wego}
+    username: ${POSTGRES_USER:wego}
+    password: ${POSTGRES_PASSWORD:}
+    hikari:
+      # 요청 대부분이 메모리 응답이라 연결은 적게 둠(VM 메모리 2GB)
+      maximum-pool-size: 5
+  jpa:
+    # 스키마는 Flyway만 바꿈. Hibernate는 엔티티와 테이블이 맞는지만 확인
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # 마이그레이션 파일 위치: src/main/resources/db/migration (V1__설명.sql)
+    locations: classpath:db/migration
   mvc:
     # 오류 응답을 RFC 9457 ProblemDetail로 전송.
     problemdetails:
