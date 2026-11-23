@@ -1,8 +1,10 @@
+import SwiftData
 import SwiftUI
 
 /// 정류장 선택 전 홈 시트 (Figma 299:58): 나의 이용 기록. 끌어서 높이를 바꾼다.
 /// 디자인의 "많이 찾는 코스"는 다른 사람의 공유 경로가 필요해서 서버 연동(1.1) 때 다시 넣는다.
 struct HomeSheet: View {
+    @Environment(\.tabBarHeight) private var tabBarHeight
     /// 최근 주행 기록(최대 3개, 최신순)
     let myRides: [RideRecord]
     @Binding var detent: SheetDetent
@@ -23,7 +25,7 @@ struct HomeSheet: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 120) // 플로팅 탭바에 가리지 않게
+                .padding(.bottom, tabBarHeight + 24) // 탭바에 가리지 않게
             }
         }
     }
@@ -62,12 +64,15 @@ struct HomeSheet: View {
 /// 기획상 필요한 "잔여 대수(참고)"는 시안에 자리가 없어 아직 넣지 않았다 — 디자이너와 위치 결정 필요.
 struct StationSheet: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
+    /// 저장, 즐겨찾기 표시(카드 배지)
+    @Query private var savedCourses: [SavedCourse]
     let station: Station
     @Binding var filter: CourseFilter
     let courses: [Course]
     /// 카드를 눌러 고른 코스(주황 테두리, 지도에 경로 표시)
     @Binding var selectedCourseID: Course.ID?
-    /// `>`로 연 코스 상세. 있으면 목록 대신 상세를 보여준다(Figma 299:224).
+    /// 선택된 카드를 다시 눌러 연 코스 상세. 있으면 목록 대신 상세를 보여준다(Figma 299:224).
     @Binding var detailCourseID: Course.ID?
     /// "코스 선택하기"로 이번 주행 코스로 지정한 코스
     let chosenCourseID: Course.ID?
@@ -76,8 +81,9 @@ struct StationSheet: View {
     @Binding var detent: SheetDetent
     let heights: (CGFloat) -> SheetHeights
 
-    /// 하단 버튼 아래로 플로팅 탭바(58)와 여백(위 24, 아래 23)이 들어갈 자리
-    private let tabBarReserve: CGFloat = 24 + 58 + 23
+    @Environment(\.tabBarHeight) private var tabBarHeight
+    /// 하단 버튼과 탭바 사이 여백
+    static let buttonBottomGap: CGFloat = 16
 
     var body: some View {
         // 하단 버튼은 어느 높이에서든 보여야 해서, 접힐 때는 위쪽 목록·상세만 흐리게 하고 줄여서 가린다.
@@ -104,7 +110,7 @@ struct StationSheet: View {
                 buttons
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, tabBarReserve)
+                    .padding(.bottom, Self.buttonBottomGap + tabBarHeight)
             }
         }
     }
@@ -161,9 +167,11 @@ struct StationSheet: View {
                             onDetail: {
                                 selectedCourseID = course.id
                                 detailCourseID = course.id
-                            }
+                            },
+                            marks: marks(for: course.id),
+                            onToggleMark: { mark in toggle(mark, for: course) }
                         )
-                        .onTapGesture { selectedCourseID = course.id }
+                        .onTapGesture { tapCourse(course.id) }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -177,23 +185,48 @@ struct StationSheet: View {
         switch filter {
         case .recent: "이 정류장에서 출발한 내 기록이 아직 없어요.\n정류장에서 정류장까지 달리면 여기에 쌓여요."
         case .popular: "인기 코스는 준비 중이에요."
-        case .saved: "코스 저장은 준비 중이에요."
+        case .saved: "이 정류장에서 출발하는 저장한 코스가 없어요.\n코스 카드의 북마크나 별을 눌러 저장해 보세요."
         }
     }
 
-    /// 173×52 버튼 두 개, 간격 16
+    private func marks(for courseID: Course.ID) -> Set<CourseMark> {
+        guard let saved = savedCourses.first(where: { $0.courseID == courseID }) else { return [] }
+        return Set(CourseMark.allCases.filter { saved.has($0) })
+    }
+
+    private func toggle(_ mark: CourseMark, for course: Course) {
+        SavedCourse.toggle(
+            mark,
+            for: course,
+            startStationName: startName(of: course),
+            endStationName: endName(of: course),
+            in: modelContext
+        )
+    }
+
+    /// 처음 누르면 선택(지도에 경로), 이미 선택된 카드를 다시 누르면 코스 상세로 간다.
+    private func tapCourse(_ id: Course.ID) {
+        if selectedCourseID == id {
+            detailCourseID = id
+        } else {
+            selectedCourseID = id
+        }
+    }
+
+    /// 173x52 버튼 두 개, 간격 16. 문구는 목록(Figma 402:159)과 코스 상세(299:224)가 다르다.
     private var buttons: some View {
         HStack(spacing: 16) {
             // 지정 상태 디자인이 아직 없어 "선택됨" + 주황 배경으로 임시 구분한다.
             let isChosen = selectedCourseID != nil && selectedCourseID == chosenCourseID
+            let isDetail = detailCourseID != nil
             sheetButton(
-                isChosen ? "선택됨" : "코스 선택하기",
+                isChosen ? "선택됨" : (isDetail ? "코스 선택" : "코스 선택하기"),
                 background: isChosen ? WeGoColor.primaryLight : WeGoColor.gray500,
                 action: onChooseCourse
             )
             .disabled(selectedCourseID == nil)
             .accessibilityHint(isChosen ? "다시 누르면 코스 지정을 해제해요" : "대여 후 이 코스로 안내해요")
-            sheetButton("대여하러 가기", background: WeGoColor.buttonDark, action: onRent)
+            sheetButton(isDetail ? "대여하기" : "대여하러 가기", background: WeGoColor.buttonDark, action: onRent)
                 .accessibilityHint("\(station.bikeOperator.displayName) 앱으로 이동해 대여해요")
         }
     }

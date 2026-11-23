@@ -36,6 +36,15 @@ enum WeGoFormat {
         return minutes % 60 == 0 ? "\(minutes / 60)시간" : "\(minutes / 60)시간 \(minutes % 60)분"
     }
 
+    /// 실제로 걸린 시간을 초까지(이용 내역). 54분 42초 / 1시간 2분 3초 / 42초
+    static func minutesAndSeconds(_ seconds: Double) -> String {
+        let total = max(0, Int(seconds))
+        let hours = total / 3600, minutes = (total % 3600) / 60, secs = total % 60
+        if hours > 0 { return "\(hours)시간 \(minutes)분 \(secs)초" }
+        if minutes > 0 { return "\(minutes)분 \(secs)초" }
+        return "\(secs)초"
+    }
+
     static func won(_ amount: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal

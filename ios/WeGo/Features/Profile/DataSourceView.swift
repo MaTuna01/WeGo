@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 데이터 출처 고지. 공공데이터는 출처를 밝혀야 하고, 운영 기관과 관계없는 앱이라는 점도 함께 적는다.
 struct DataSourceView: View {
+    @Environment(\.tabBarHeight) private var tabBarHeight
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -22,7 +23,7 @@ struct DataSourceView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
-            .padding(.bottom, ProfileLayout.tabBarReserve)
+            .padding(.bottom, tabBarHeight + 24)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(Color.white.ignoresSafeArea())

@@ -8,6 +8,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openURL) private var openURL
+    @Environment(\.tabBarHeight) private var tabBarHeight
 
     /// 홈 "나의 이용 기록": 최근 주행 3개
     @Query(HomeView.recentRidesDescriptor) private var recentRides: [RideRecord]
@@ -23,11 +24,15 @@ struct HomeView: View {
     private var shareableRides: [RideRecord]
     /// 고른 정류장에서 출발한 내 기록을 코스로 만든 것. 경로 압축을 매번 풀지 않게 정류장·기록이 바뀔 때만 다시 만든다.
     @State private var myRideCourses: [Course] = []
+    /// 저장, 즐겨찾기한 코스(최근 표시한 순)
+    @Query(sort: \SavedCourse.markedAt, order: .reverse) private var savedCourses: [SavedCourse]
+    /// 저장 탭에서 요청한 코스. 정류장 시트가 열리면 첫 코스 대신 이 코스를 고른다.
+    @State private var pendingCourseID: Course.ID?
 
     @State private var camera: MapCameraPosition = .userLocation(fallback: .region(MockData.defaultRegion))
     @State private var selectedStationID: Station.ID?
     @State private var operatorFilter: BikeOperator?
-    /// 1.0은 인기/저장 코스가 없어서(서버 공유 경로 전) 내 기록이 나오는 최신 탭을 기본으로 연다.
+    /// 인기 코스는 서버 공유 경로가 생기기 전이라 숨겨 두고, 내 기록이 나오는 최신 탭을 기본으로 연다.
     @State private var courseFilter: CourseFilter = .recent
     @State private var selectedCourseID: Course.ID?
     @State private var detailCourseID: Course.ID?
@@ -41,6 +46,8 @@ struct HomeView: View {
     @State private var containerFrame: CGRect = .zero
     /// 지도에 보이는 영역. 첫 카메라 이동 전에는 기본 위치로 본다.
     @State private var mapRegion: MKCoordinateRegion = MockData.defaultRegion
+    /// 끄는 중까지 포함한 지금 시트 높이(지도 버튼이 시트 바로 위를 따라간다)
+    @State private var sheetHeight: CGFloat = 0
 
     /// 운영사 칩으로 거른 전체 정류장
     private var filteredStations: [Station] {
@@ -63,8 +70,12 @@ struct HomeView: View {
         switch courseFilter {
         case .recent:
             return myRideCourses
-        case .popular, .saved:
-            // 인기(다른 사람의 공유 경로)와 저장은 서버 연동(1.1) 후에 채운다.
+        case .saved:
+            return savedCourses
+                .filter { $0.startStationID == selectedStation.id }
+                .map(\.course)
+        case .popular:
+            // 인기(다른 사람의 공유 경로)는 서버 연동 후에 채운다.
             return []
         }
     }
@@ -96,22 +107,34 @@ struct HomeView: View {
                 title: selectedStation?.name,
                 operatorFilter: $operatorFilter,
                 onClear: { selectedStationID = nil },
-                onRecenter: {
-                    withAnimation { camera = .userLocation(fallback: .region(MockData.defaultRegion)) }
-                }
+                onRecenter: recenter
             )
             .padding(.horizontal, 20)
             .padding(.top, 8)
             .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: { topBarBottom = $0 }
         }
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { containerFrame = $0 }
+        .overlay(alignment: .bottomTrailing) {
+            mapControls
+        }
         .overlay(alignment: .bottom) {
             sheet
         }
+        .onPreferenceChange(BottomSheetHeightKey.self) { sheetHeight = $0 }
         .animation(.spring(duration: 0.3), value: selectedStationID)
         .animation(.easeInOut(duration: 0.2), value: mapStations.isZoomedOutTooFar)
         .onAppear {
             appState.location.requestPermission()
+            openRequestedCourse()
+        }
+        .onChange(of: appState.requestedCourse?.id) { _, _ in
+            openRequestedCourse()
+        }
+        .onChange(of: savedCourses.map(\.courseID)) { _, _ in
+            // 저장 코스 칩에서 표시를 끄면 목록에서 빠지므로 선택을 다시 고른다.
+            if courseFilter == .saved, !stationCourses.contains(where: { $0.id == selectedCourseID }) {
+                selectFirstCourse()
+            }
         }
         .onChange(of: selectedStationID) { _, newID in
             sheetDetent = .standard
@@ -161,6 +184,46 @@ struct HomeView: View {
         }
     }
 
+    /// 오른쪽 지도 버튼(Figma 430:1942). 시트 위 16pt를 따라다니고, 시트를 펼쳐 지도가 좁아지면 숨긴다.
+    private var mapControls: some View {
+        let mapVisibleHeight = containerFrame.height - sheetHeight - (topBarBottom - containerFrame.minY)
+        let isVisible = sheetHeight > 0 && mapVisibleHeight > Self.mapControlsMinimumSpace
+        return MapControls(
+            onZoomIn: { zoom(by: 0.5) },
+            onZoomOut: { zoom(by: 2) },
+            onRecenter: recenter
+        )
+        .padding(.trailing, 16)
+        .padding(.bottom, sheetHeight + 16)
+        .opacity(isVisible ? 1 : 0)
+        .allowsHitTesting(isVisible)
+        .animation(.easeInOut(duration: 0.15), value: isVisible)
+    }
+
+    /// 지도 버튼(높이 약 117)과 위아래 여백이 들어갈 만큼 지도가 보여야 버튼을 보여 준다.
+    private static let mapControlsMinimumSpace: CGFloat = 160
+
+    private func zoom(by factor: Double) {
+        withAnimation { camera = .region(MapZoom.region(mapRegion, scaledBy: factor)) }
+    }
+
+    /// 내 위치를 시트와 상단 바에 가리지 않는 지도 영역의 가운데로 옮긴다(확대 정도는 그대로).
+    /// 위치를 아직 모르면(권한 거부 등) 지도가 알아서 내 위치를 찾거나 기본 위치를 보여 준다.
+    private func recenter() {
+        let mapHeight = containerFrame.maxY
+        guard let coordinate = appState.location.lastLocation?.coordinate, mapHeight > 0 else {
+            withAnimation { camera = .userLocation(fallback: .region(MockData.defaultRegion)) }
+            return
+        }
+        let region = MapZoom.region(
+            centering: coordinate,
+            span: mapRegion.span,
+            visibleTop: topBarBottom / mapHeight,
+            visibleBottom: (mapHeight - sheetHeight) / mapHeight
+        )
+        withAnimation { camera = .region(region) }
+    }
+
     @ViewBuilder
     private var sheet: some View {
         if let station = selectedStation {
@@ -187,26 +250,28 @@ struct HomeView: View {
         }
     }
 
-    /// 접힘: 플로팅 탭바(아래 여백 23 + 높이 58) 위로 손잡이만 보이게
-    private static let collapsedSheetHeight: CGFloat = 23 + 58 + 24
+    /// 접힘: 탭바 위로 손잡이만 보이게
+    private var collapsedSheetHeight: CGFloat { tabBarHeight + 24 }
 
     /// 홈 시트: 기본은 Figma 높이 372pt(299:58, 위에서 502pt부터)
     private func homeSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
         SheetHeights(
-            collapsed: Self.collapsedSheetHeight,
+            collapsed: collapsedSheetHeight,
             standard: 372,
             expanded: expandedSheetHeight(containerHeight)
         )
     }
 
-    /// 정류장 시트 접힘: 손잡이(위 13 + 5) + 버튼 위 여백 12 + 버튼 52 + 탭바 자리(24 + 58 + 23).
+    /// 정류장 시트 접힘: 손잡이(위 13 + 5) + 버튼 위 여백 12 + 버튼 52 + 버튼 아래 여백 + 탭바.
     /// 하단 버튼은 어느 높이에서든 보여야 해서 홈 시트보다 높다.
-    private static let stationCollapsedSheetHeight: CGFloat = 13 + 5 + 12 + 52 + 24 + 58 + 23
+    private var stationCollapsedSheetHeight: CGFloat {
+        13 + 5 + 12 + 52 + StationSheet.buttonBottomGap + tabBarHeight
+    }
 
     /// 정류장·코스 상세 시트: 기본은 Figma 299:121·299:224처럼 화면 위에서 365pt(874pt 기준)부터
     private func stationSheetHeights(_ containerHeight: CGFloat) -> SheetHeights {
         SheetHeights(
-            collapsed: Self.stationCollapsedSheetHeight,
+            collapsed: stationCollapsedSheetHeight,
             standard: screenHeight(containerHeight) * (874 - 365) / 874,
             expanded: expandedSheetHeight(containerHeight)
         )
@@ -247,9 +312,34 @@ struct HomeView: View {
     }
 
     /// 정류장이나 코스 탭이 바뀌면 첫 코스를 골라 둔다(디자인처럼 첫 카드가 선택된 상태로 시작).
+    /// 저장 탭에서 요청한 코스가 있으면 그 코스를 고른다.
     private func selectFirstCourse() {
-        selectedCourseID = stationCourses.first?.id
+        if let pendingCourseID, stationCourses.contains(where: { $0.id == pendingCourseID }) {
+            selectedCourseID = pendingCourseID
+            self.pendingCourseID = nil
+        } else {
+            selectedCourseID = stationCourses.first?.id
+        }
         detailCourseID = nil
+    }
+
+    /// 저장 탭의 "코스 보기": 코스의 출발 정류장 시트를 저장 코스 칩으로 열고 그 코스를 고른다.
+    private func openRequestedCourse() {
+        guard let course = appState.requestedCourse else { return }
+        appState.requestedCourse = nil
+        guard let stationID = course.startStationID, appState.stationRepository.station(id: stationID) != nil else { return }
+        pendingCourseID = course.id
+        courseFilter = .saved
+        if selectedStationID == stationID {
+            selectFirstCourse()
+        } else {
+            selectedStationID = stationID
+        }
+        // 탭을 막 바꿔 화면 크기를 아직 모를 수 있어 잠시 뒤 지도를 코스에 맞춘다.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            fitSelectedCourse()
+        }
     }
 
     /// 고른 카드를 이번 주행 코스로 지정하거나, 이미 지정돼 있으면 해제한다.

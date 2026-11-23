@@ -23,6 +23,14 @@ enum SheetDetent: Int, CaseIterable, Comparable {
     }
 }
 
+/// 끄는 동안까지 포함한 지금 시트 높이. 시트 바로 위를 따라다녀야 하는 버튼(홈 지도 버튼 등)이 읽는다.
+struct BottomSheetHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 /// 단계별 시트 높이(시트를 담은 영역 아래끝에서 시트 윗변까지, pt)
 struct SheetHeights {
     var collapsed: CGFloat
@@ -41,7 +49,7 @@ struct SheetHeights {
 /// 손잡이를 끌어 올리고 내리는 바텀시트(Draggable bottom sheet).
 /// 놓으면 손을 뗀 속도까지 감안한 위치에서 가장 가까운 단계로 붙는다.
 ///
-/// 시스템 `.sheet`는 플로팅 탭바 위에 떠서 탭바를 가리므로 직접 그린다.
+/// 시스템 `.sheet`는 탭바 위에 떠서 탭바를 가리므로 직접 그린다.
 /// 화면 전체 크기로 두고 아래에 붙여 쓴다. 시트 밖 빈 영역은 터치를 막지 않아 지도를 그대로 움직일 수 있다.
 ///
 /// 시트 안 스크롤은 `SheetScrollView`로 감싼다. 펼침에서만 스크롤되고, 그 외 단계에서는 끌면 시트가 움직인다.
@@ -84,6 +92,7 @@ struct DraggableBottomSheet<Content: View>: View {
                     .environment(\.sheetContentOpacity, opacity)
             }
             .frame(height: height)
+            .preference(key: BottomSheetHeightKey.self, value: height)
             .overlay(alignment: .top) { handleAccessibility }
             .simultaneousGesture(dragGesture(heights))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

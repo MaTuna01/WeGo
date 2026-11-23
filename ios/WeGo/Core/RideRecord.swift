@@ -41,6 +41,8 @@ final class RideRecord {
     var sharedLengthMeters: Double = 0
     /// 정류장별로 공유할 수 있는 기록인지. 실제 공유는 주행 요약 화면에서 사용자가 고른다(기본 비공개).
     var isShareable: Bool = false
+    /// 대여한 시간권(시간 단위, 1 또는 2). 1.1에서 추가해 그 전 기록은 1시간권으로 본다.
+    var passHours: Int = 1
 
     init(
         id: UUID = UUID(),
@@ -55,7 +57,8 @@ final class RideRecord {
         ridingSeconds: Double,
         rentalSeconds: Double,
         trackPoints: [TrackPoint],
-        segmentStarts: [Int] = []
+        segmentStarts: [Int] = [],
+        pass: TimePass = .oneHour
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -71,6 +74,7 @@ final class RideRecord {
         self.pointCount = trackPoints.count
         self.trackData = TrackCodec.encode(trackPoints)
         self.segmentStarts = segmentStarts
+        self.passHours = pass == .twoHours ? 2 : 1
     }
 
     /// 저장된 경로 점. 압축을 풀어야 해서 목록 화면처럼 자주 그리는 곳에서는 부르지 않는다.
@@ -115,7 +119,8 @@ extension RideRecord {
             ridingSeconds: session.ridingElapsed(at: endedAt),
             rentalSeconds: session.rentalElapsed(at: endedAt),
             trackPoints: session.trackPoints,
-            segmentStarts: session.segmentStarts
+            segmentStarts: session.segmentStarts,
+            pass: session.pass
         )
         applyMatch(
             StationMatcher.match(
@@ -125,6 +130,23 @@ extension RideRecord {
             ),
             stations: stations
         )
+    }
+}
+
+/// 마이페이지 이용 내역(Figma 337:1064)에 쓰는 값
+extension RideRecord {
+    var pass: TimePass {
+        passHours >= 2 ? .twoHours : .oneHour
+    }
+
+    /// 대여 시간이 시간권을 넘었는지. 정확한 요금은 운영사만 알 수 있어 금액 대신 추가요금 발생 여부만 보여 준다.
+    var hasExtraFee: Bool {
+        rentalSeconds > pass.duration
+    }
+
+    /// 이용 내역 줄 제목: 도착 정류장, 도착이 판정되지 않았으면 "출발 정류장 출발"
+    var historyTitle: String {
+        endStationName ?? "\(matchedStartStationName ?? startStationName) 출발"
     }
 }
 
@@ -170,7 +192,7 @@ enum TrackCodec {
     }
 }
 
-/// 주행 기록 저장소. 앱 전체에서 하나의 ModelContainer를 쓴다.
+/// 주행 기록 저장소. 앱 전체에서 하나의 ModelContainer를 쓴다(저장한 코스 SavedCourse도 같은 저장소).
 /// AppState처럼 메인 스레드(화면 동작)에서만 부른다. 화면의 `@Query`와 같은 메인 컨텍스트에 써서 저장하면 바로 반영되게 한다.
 final class RideRecordStore {
     let container: ModelContainer
@@ -179,13 +201,13 @@ final class RideRecordStore {
 
     init() {
         do {
-            container = try ModelContainer(for: RideRecord.self)
+            container = try ModelContainer(for: RideRecord.self, SavedCourse.self)
         } catch {
             // 저장소를 못 열어도 앱은 돌아가게 메모리 저장소로 대신한다(이번 실행 동안만 남음).
             Logger(subsystem: "com.matuna01.wego", category: "RideRecord")
                 .error("기록 저장소 열기 실패, 메모리로 대체: \(error.localizedDescription, privacy: .public)")
             container = try! ModelContainer(
-                for: RideRecord.self,
+                for: RideRecord.self, SavedCourse.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }

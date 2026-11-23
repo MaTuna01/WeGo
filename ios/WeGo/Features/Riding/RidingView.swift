@@ -45,7 +45,7 @@ struct RidingView: View {
                 Text("10분 전 알림을 받으려면 설정에서 위고 알림을 허용해 주세요.")
             }
             .overlay(alignment: .bottomLeading) {
-                RideMapControls(
+                MapControls(
                     onZoomIn: { zoom(by: 0.5) },
                     onZoomOut: { zoom(by: 2) },
                     onRecenter: { withAnimation { camera = .userLocation(followsHeading: false, fallback: .region(MockData.defaultRegion)) } }
