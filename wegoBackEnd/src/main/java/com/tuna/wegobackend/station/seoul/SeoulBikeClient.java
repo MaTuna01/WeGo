@@ -45,6 +45,11 @@ public class SeoulBikeClient implements StationSource {
     }
 
     @Override
+    public BikeOperator operator() {
+        return BikeOperator.TTAREUNGYI;
+    }
+
+    @Override
     public boolean isEnabled() {
         return properties.hasApiKey();
     }
