@@ -178,3 +178,14 @@ footer.site {
   font-size: 14px;
   border-top: 1px solid var(--line);
 }
+
+/* 공지사항: 글마다 위에 줄을 긋고(h2 스타일), 날짜는 제목 바로 아래 흐리게 */
+.notice h2 {
+  margin-bottom: 0;
+}
+
+.notice-date {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 2px 0 12px;
+}
