@@ -3,23 +3,28 @@ package com.tuna.wegobackend.station;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Instant;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 /**
  * 정류장 테이블(stations) 한 행. API 응답 모양은 Station(record)이고, 이 엔티티는 저장과 이력용
  * - location(geography) 컬럼은 DB가 위도, 경도로 계산하므로 매핑하지 않음
  * - 자주 바뀌는 값(잔여 대수)은 두지 않음
+ * - ID를 직접 정하므로 Persistable로 새 행인지 알려 줌(그렇지 않으면 저장 전에 행마다 SELECT함)
  */
 @Entity
 @Table(name = "stations")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StationEntity {
+public class StationEntity implements Persistable<String> {
 
     @Id
     private String id;
@@ -52,6 +57,9 @@ public class StationEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Transient
+    private boolean isNew;
+
     /**
      * 처음 받은 정류장
      *
@@ -66,6 +74,7 @@ public class StationEntity {
         entity.copyFrom(station);
         entity.lastSeenAt = now;
         entity.updatedAt = now;
+        entity.isNew = true;
         return entity;
     }
 
@@ -92,6 +101,17 @@ public class StationEntity {
         removedAt = now;
         updatedAt = now;
         return true;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        isNew = false;
     }
 
     public boolean isActive() {

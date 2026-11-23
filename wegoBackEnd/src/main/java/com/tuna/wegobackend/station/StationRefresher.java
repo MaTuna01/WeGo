@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
  * - 서버 시작 직후 한 번, 이후 refresh-interval(기본 6시간)마다 모든 운영사를 받음
  * - 운영사마다 따로 받고, 실패하거나 빈 목록이면 그 운영사만 이전 목록 유지
  * - 운영사별 마지막 성공 목록을 합쳐 StationStore에 넣음
+ * - 받은 운영사는 DB(stations)에도 반영. DB 반영이 실패해도 메모리 목록은 갱신함(GET /stations는 메모리로 응답)
  * - 한 번도 받지 못한 운영사만 retry-interval(기본 1분)마다 다시 시도
  * - 인증키가 없는 운영사는 건너뜀(모든 운영사가 한 번도 못 받았으면 GET /stations는 503)
  */
@@ -27,6 +28,7 @@ public class StationRefresher {
 
     private final List<StationSource> sources;
     private final StationStore store;
+    private final StationSyncService syncService;
     private final Clock clock;
     /** 운영사별 마지막 성공 목록 */
     private final Map<BikeOperator, List<Station>> lastGood = new EnumMap<>(BikeOperator.class);
@@ -34,14 +36,15 @@ public class StationRefresher {
     private final Set<BikeOperator> warnedDisabled = EnumSet.noneOf(BikeOperator.class);
 
     @Autowired
-    public StationRefresher(List<StationSource> sources, StationStore store) {
-        this(sources, store, Clock.systemUTC());
+    public StationRefresher(List<StationSource> sources, StationStore store, StationSyncService syncService) {
+        this(sources, store, syncService, Clock.systemUTC());
     }
 
     /** 테스트에서 시각을 고정할 때 */
-    StationRefresher(List<StationSource> sources, StationStore store, Clock clock) {
+    StationRefresher(List<StationSource> sources, StationStore store, StationSyncService syncService, Clock clock) {
         this.sources = List.copyOf(sources);
         this.store = store;
+        this.syncService = syncService;
         this.clock = clock;
     }
 
@@ -97,6 +100,7 @@ public class StationRefresher {
             }
             lastGood.put(operator, List.copyOf(stations));
             log.info("{} 정류장 {}곳 갱신 ({}ms)", operator.code(), stations.size(), (System.nanoTime() - startedAt) / 1_000_000);
+            saveToDb(operator, stations);
             return true;
         } catch (StationFetchException e) {
             log.error("{} 정류장 갱신 실패, 이전 목록 유지({}곳): {}", operator.code(), receivedCount(operator), e.getMessage());
@@ -105,6 +109,17 @@ public class StationRefresher {
             // 예상 못 한 오류도 스케줄러를 멈추지 않게 잡음(메시지에 키가 있을 수 있어 종류만 기록)
             log.error("{} 정류장 갱신 중 예외, 이전 목록 유지: {}", operator.code(), e.getClass().getName());
             return false;
+        }
+    }
+
+    /** DB 반영. 실패해도 메모리 갱신은 성공으로 둠(다음 갱신 때 다시 반영됨) */
+    private void saveToDb(BikeOperator operator, List<Station> stations) {
+        try {
+            StationSyncService.Result result = syncService.sync(operator, stations, Instant.now(clock));
+            log.info("{} 정류장 DB 반영: 추가 {}, 변경 {}, 빠짐 {}, 그대로 {}",
+                    operator.code(), result.added(), result.changed(), result.removed(), result.unchanged());
+        } catch (RuntimeException e) {
+            log.error("{} 정류장 DB 반영 실패(메모리 목록은 갱신함): {}", operator.code(), e.getClass().getName());
         }
     }
 

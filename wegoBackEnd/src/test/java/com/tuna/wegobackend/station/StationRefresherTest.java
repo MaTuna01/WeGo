@@ -1,6 +1,13 @@
 package com.tuna.wegobackend.station;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -72,9 +79,14 @@ class StationRefresherTest {
     }
 
     private final StationStore store = new StationStore(tools.jackson.databind.json.JsonMapper.builder().build());
+    private final StationSyncService syncService = mock(StationSyncService.class);
+
+    {
+        when(syncService.sync(any(), anyList(), any())).thenReturn(new StationSyncService.Result(0, 0, 0, 0));
+    }
 
     private StationRefresher refresher(StationSource... sources) {
-        return new StationRefresher(List.of(sources), store, Clock.fixed(NOW, ZoneOffset.UTC));
+        return new StationRefresher(List.of(sources), store, syncService, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private List<String> storedIds() {
@@ -190,5 +202,28 @@ class StationRefresherTest {
         assertThat(seoul.calls).isEqualTo(1);
         assertThat(tashu.calls).isEqualTo(2);
         assertThat(storedIds()).containsExactlyInAnyOrder("A", "T1");
+    }
+
+    @Test
+    @DisplayName("받은 운영사만 DB에 반영한다")
+    void savesOnlyReceivedOperatorsToDb() {
+        var seoulStations = List.of(station("A"));
+        var refresher = refresher(seoul().then(() -> seoulStations), tashu().thenFail());
+
+        refresher.refresh();
+
+        verify(syncService).sync(BikeOperator.TTAREUNGYI, seoulStations, NOW);
+        verify(syncService, never()).sync(eq(BikeOperator.TASHU), anyList(), any());
+    }
+
+    @Test
+    @DisplayName("DB 반영이 실패해도 메모리 목록은 갱신한다")
+    void updatesStoreWhenDbFails() {
+        when(syncService.sync(any(), anyList(), any())).thenThrow(new IllegalStateException("db down"));
+        var refresher = refresher(seoul().then(() -> List.of(station("A"))));
+
+        assertThat(refresher.refresh()).isTrue();
+
+        assertThat(storedIds()).containsExactly("A");
     }
 }
