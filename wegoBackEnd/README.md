@@ -1,6 +1,6 @@
 # WeGo 서버
 
-앱이 쓰는 API 두 개만 제공한다. 6시간마다 서울시 공공자전거 API에서 따릉이 정류장을 받아 DB(stations 테이블)에 반영하고, GET /stations는 요청마다 DB의 활성 정류장을 읽어 응답한다(캐시 없음). 서버를 다시 켜도 운영사 API와 상관없이 마지막 목록으로 응답한다. API 모양은 저장소 루트의 docs/api-contract.md를 따른다.
+앱이 쓰는 API 두 개만 제공한다. 6시간마다 서울시 공공자전거 API(따릉이)와 타슈 Open API(대전 타슈)에서 정류장을 운영사별로 받아 DB(stations 테이블)에 반영하고, GET /stations는 요청마다 DB의 활성 정류장을 읽어 응답한다(캐시 없음). 서버를 다시 켜도 운영사 API와 상관없이 마지막 목록으로 응답한다. API 모양은 저장소 루트의 docs/api-contract.md를 따른다.
 
 DB는 PostgreSQL(PostGIS)이다. 스키마는 Flyway가 서버 시작 때 바꾼다(src/main/resources/db/migration). 정류장 좌표는 geography 컬럼과 GiST 인덱스로 저장한다. 운영사 목록에서 빠진 정류장은 지우지 않고 removed_at만 표시한다.
 
@@ -27,6 +27,7 @@ DB는 PostgreSQL(PostGIS)이다. 스키마는 Flyway가 서버 시작 때 바꾼
 | 이름 | 필수 | 기본값 | 설명 |
 |---|---|---|---|
 | SEOUL_OPEN_API_KEY | 예 | 없음 | 서울 열린데이터광장 공공자전거 실시간 대여정보 인증키. 없으면 수집하지 않음(DB에 이전 목록이 있으면 GET /stations는 그 목록으로 응답) |
+| TASHU_API_KEY | 아니오 | 없음 | 타슈 Open API 인증키(타슈 앱에서 신청, 수동 승인). 없으면 타슈만 수집하지 않고 따릉이는 그대로 수집 |
 | WEGO_MINIMUM_VERSION | 아니오 | 1.0.0 | 최소 지원 앱 버전. 올리면 이보다 낮은 앱은 업데이트 안내로 막힌다 |
 | SERVER_PORT | 아니오 | 8080 | 서버 포트(Docker 배포에서는 8080 고정) |
 | POSTGRES_DB | 예 | wego | DB 이름. 배포에서는 db 컨테이너가 처음 시작할 때 이 이름으로 DB를 만든다 |
@@ -141,6 +142,7 @@ DB 없이 돌던 VM은 한 번만 아래를 한다.
 - 정적 페이지의 연락처, 시행일을 바꾸면 deploy/site의 HTML을 고치고 dev에 머지한 뒤 VM에서 git pull 한다. 처리방침의 내용이 바뀌면 시행일을 새로 적고, 시행 7일 전(중요한 변경은 30일 전)부터 게시한다.
 - caddy_data 볼륨에 인증서가 들어 있다. 지우면 다시 발급받는데, Let's Encrypt 발급 횟수 제한이 있으니 자주 지우지 않는다.
 - 서울시 API는 HTTP(8088)만 제공하므로 서버에서 서울시로 가는 구간은 암호화되지 않는다. 인증키는 서버 밖으로 나가지 않게 .env에만 둔다.
+- 타슈 API는 HTTPS 50041 포트를 쓴다. VM 방화벽이나 클라우드 보안 그룹에서 나가는 50041이 막혀 있으면 타슈 수집만 실패한다(docker compose logs api에서 "tashu" 줄로 확인).
 
 #### 메모리
 
