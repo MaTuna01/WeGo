@@ -60,6 +60,14 @@ wego:
     max-pages: 10
     connect-timeout: PT5S
     read-timeout: PT20S
+  tashu:
+    # 타슈 Open API 인증키(api-token 헤더). 환경 변수 TASHU_API_KEY로만 주입, 없으면 수집 안 함
+    api-key: ${TASHU_API_KEY:}
+    base-url: https://bikeapp.tashu.or.kr:50041
+    # 지금은 한 페이지로 전체가 옴. next가 이어질 때를 대비한 상한
+    max-pages: 10
+    connect-timeout: PT5S
+    read-timeout: PT20S
 
 management:
   endpoints:
