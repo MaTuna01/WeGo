@@ -63,7 +63,7 @@ public class StationEntity implements Persistable<String> {
     /**
      * 처음 받은 정류장
      *
-     * @param sourceId 운영사 원본 ID(따릉이는 station.id()와 같음)
+     * @param sourceId 운영사 원본 ID(따릉이는 station.id()와 같고, 타슈는 접두어를 뗀 값)
      */
     public static StationEntity firstSeen(Station station, String sourceId, Instant now) {
         StationEntity entity = new StationEntity();

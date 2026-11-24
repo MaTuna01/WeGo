@@ -72,8 +72,8 @@ public class StationSyncService {
         return new Result(newEntities.size(), changed, removed, unchanged);
     }
 
-    /** 운영사 원본 ID. 따릉이는 앱에 주는 ID와 같음(타슈는 #67에서 실제 ID를 보고 정함) */
+    /** 운영사 원본 ID. 따릉이는 앱에 주는 ID와 같고, 타슈는 접두어(TS-)를 뗀 값 */
     private static String sourceIdOf(Station station) {
-        return station.id();
+        return station.operator().sourceIdOf(station.id());
     }
 }
