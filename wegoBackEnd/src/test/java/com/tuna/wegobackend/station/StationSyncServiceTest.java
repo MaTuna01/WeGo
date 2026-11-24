@@ -106,6 +106,14 @@ class StationSyncServiceTest {
     }
 
     @Test
+    @DisplayName("타슈는 접두어를 뗀 원본 ID를 source_id로 저장한다")
+    void storesTashuSourceIdWithoutPrefix() {
+        sync(BikeOperator.TASHU, List.of(tashu("TS-ST0003")), T0);
+
+        assertThat(find("TS-ST0003").getSourceId()).isEqualTo("ST0003");
+    }
+
+    @Test
     @DisplayName("같은 ID가 두 번 오면 먼저 온 것만 쓴다")
     void ignoresDuplicateIds() {
         var result = sync(BikeOperator.TTAREUNGYI, List.of(seoul("ST-1", "A"), seoul("ST-1", "A 중복")), T0);
